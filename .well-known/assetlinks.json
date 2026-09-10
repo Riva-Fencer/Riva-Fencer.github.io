@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.riva_fencer.twa",
+        "sha256_cert_fingerprints": ["12:07:C4:D3:A3:8B:62:7C:A6:EA:8B:49:75:AE:A5:9E:90:DD:A5:0A:31:35:93:EF:FC:60:A0:AF:35:EE:75:6F"]
+      }
+    }]
