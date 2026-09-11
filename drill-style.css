@@ -13,7 +13,7 @@
 
 :root {
     --bg-dark: #070a12;
-    --dock-bg: rgba(15, 23, 42, 0.85);
+    --dock-bg: rgba(15, 23, 42, 0.88);
     --border-subtle: rgba(255, 255, 255, 0.08);
     --accent-cyan: #38bdf8;
     --accent-glow: rgba(56, 189, 248, 0.12);
@@ -24,27 +24,37 @@
 
 html, body {
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     width: 100vw;
     height: 100vh;
+    height: var(--app-height, 100vh);
     overflow: hidden;
     background: var(--bg-dark);
     color: var(--text-main);
     font-family: var(--font-stack);
 }
 
-/* Master Viewport Container */
+/* Master Fixed Viewport Frame */
 .drill-viewport {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    height: var(--app-height, 100%);
     display: flex;
     box-sizing: border-box;
-    padding: calc(env(safe-area-inset-top) + 6px) calc(env(safe-area-inset-right) + 10px) calc(env(safe-area-inset-bottom) + 6px) calc(env(safe-area-inset-left) + 10px);
+    padding: calc(env(safe-area-inset-top, 0px) + 6px) calc(env(safe-area-inset-right, 0px) + 10px) calc(env(safe-area-inset-bottom, 0px) + 6px) calc(env(safe-area-inset-left, 0px) + 10px);
     overflow: hidden;
     gap: 8px;
 }
 
-/* Header Elements */
+/* Top App Header */
 .top-header {
     display: flex;
     align-items: center;
@@ -66,6 +76,7 @@ html, body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: transform 0.1s ease, color 0.1s ease;
 }
 
 .header-back-btn:active {
@@ -83,7 +94,7 @@ html, body {
     flex: 1;
 }
 
-/* Circular Timer Badge */
+/* Circular Timer Countdown */
 .timer-ring-container {
     position: relative;
     width: 36px;
@@ -165,7 +176,7 @@ canvas {
     z-index: 10;
 }
 
-/* Coaching Status Area */
+/* Coaching Instruction Pill */
 .coach-panel {
     flex-shrink: 0;
     display: flex;
@@ -192,7 +203,7 @@ canvas {
     margin-top: 2px;
 }
 
-/* Base Control Styles */
+/* Control Elements */
 .controls-dock {
     background: var(--dock-bg);
     border: 1px solid var(--border-subtle);
@@ -258,7 +269,7 @@ canvas {
 }
 
 /* ==========================================================================
-   PORTRAIT MODE (Vertical Flow)
+   PORTRAIT MODE (Vertical Flow - Fits on Cold Launch)
    ========================================================================== */
 @media (orientation: portrait) {
     .drill-viewport {
@@ -317,7 +328,7 @@ canvas {
 }
 
 /* ==========================================================================
-   LANDSCAPE MODE (Full Arena Stage + 64px Side Rail)
+   LANDSCAPE MODE (Arena Canvas + 64px Side Rail)
    ========================================================================== */
 @media (orientation: landscape) {
     .drill-viewport {
@@ -326,7 +337,6 @@ canvas {
         gap: 10px;
     }
 
-    /* Left Stage takes remaining width */
     .main-stage {
         flex: 1 1 0;
         min-width: 0;
@@ -355,10 +365,9 @@ canvas {
     }
 
     .hint-subtext {
-        display: none; /* Hide secondary hint in landscape to save height */
+        display: none;
     }
 
-    /* Right Controls Rail */
     .controls-dock {
         width: 64px;
         height: 100%;
@@ -378,7 +387,7 @@ canvas {
     }
 
     .hud-step-btn span {
-        display: none; /* Icon-only in landscape */
+        display: none;
     }
 
     .media-actions {
