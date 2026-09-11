@@ -23,21 +23,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            justify-content: space-between;
+            height: 100vh;
+            overflow: hidden;
         }
         .top-nav-bar {
             width: 100%;
-            max-width: 480px;
+            max-width: 520px;
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
+            justify-content: space-between;
+            gap: 10px;
+            flex-shrink: 0;
         }
         .nav-back-btn {
             background: transparent;
             border: none;
             color: #94a3b8;
-            padding: 6px 8px;
+            padding: 6px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -50,7 +53,7 @@
             color: #ffffff;
         }
         #drill-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             color: #f8fafc;
             margin: 0;
@@ -61,82 +64,152 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        /* Top-Right Circular Countdown Timer */
+        .timer-badge-container {
+            position: relative;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .timer-svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .timer-circle-bg {
+            fill: none;
+            stroke: #1e293b;
+            stroke-width: 3.2;
+        }
+        .timer-circle-progress {
+            fill: none;
+            stroke: #38bdf8;
+            stroke-width: 3.2;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.25s linear;
+        }
+        #timer-number {
+            position: absolute;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: -0.5px;
+        }
+        /* Maximized Canvas Wrapper */
         #canvas-wrapper {
             width: 100%;
-            max-width: 480px;
-            aspect-ratio: 820 / 420;
+            max-width: 520px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             position: relative;
+            margin: 8px 0;
         }
         canvas {
             width: 100% !important;
             height: 100% !important;
-            background: radial-gradient(circle at 50% 35%, #131b2e 0%, #080d17 100%);
+            max-height: 58vh;
+            background: radial-gradient(circle at 50% 40%, #131b2e 0%, #080d17 100%);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            border-radius: 16px;
             display: block;
             touch-action: none;
         }
-        .hint-caption {
-            font-size: 12px;
-            color: #94a3b8;
-            margin: 8px 0 10px;
-            text-align: center;
+        .speed-badge {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            backdrop-filter: blur(4px);
+            display: none;
+            pointer-events: none;
+            z-index: 10;
+        }
+        /* Status & Cue Section */
+        .info-panel {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            margin-bottom: 8px;
         }
         #status-box {
-            font-size: 13.5px;
-            font-weight: 600;
-            min-height: 38px;
+            font-size: 14px;
+            font-weight: 700;
+            min-height: 36px;
             color: #38bdf8;
             text-align: center;
-            max-width: 480px;
-            padding: 0 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.35;
-        }
-        .drill-grid {
-            margin-top: 10px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            width: 100%;
-            max-width: 480px;
-        }
-        .grid-step-btn {
-            height: 44px;
-            background: #0f172a;
-            color: #94a3b8;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 12.5px;
-            cursor: pointer;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 0 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.3;
+        }
+        .hint-caption {
+            font-size: 11.5px;
+            color: #64748b;
+            text-align: center;
+            margin-top: 2px;
+        }
+        /* Bottom Controls Bar */
+        .bottom-control-bar {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-shrink: 0;
+            padding-bottom: 4px;
+        }
+        .step-nav-btn {
+            flex: 1;
+            height: 52px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #cbd5e1;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
             transition: all 0.12s ease;
         }
-        .grid-step-btn:active {
-            transform: scale(0.98);
-            opacity: 0.9;
-        }
-        .grid-step-btn.active {
+        .step-nav-btn:active, .step-nav-btn.holding {
+            transform: scale(0.96);
             background: #1e293b;
+            border-color: #38bdf8;
             color: #ffffff;
-            border-color: #475569;
         }
-        .media-bar {
-            margin-top: 18px;
+        .step-nav-title {
+            font-size: 13.5px;
+            font-weight: 700;
+        }
+        .step-nav-sub {
+            font-size: 9.5px;
+            color: #64748b;
+            letter-spacing: 0.2px;
+        }
+        .step-nav-btn:active .step-nav-sub, .step-nav-btn.holding .step-nav-sub {
+            color: #38bdf8;
+        }
+        .media-cluster {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 28px;
-            width: 100%;
-            max-width: 480px;
+            gap: 14px;
         }
         .media-icon-btn {
             background: #0f172a;
@@ -156,8 +229,8 @@
             color: #ffffff;
         }
         .play-toggle-btn {
-            width: 58px;
-            height: 58px;
+            width: 56px;
+            height: 56px;
             background: #f8fafc;
             color: #080c14;
             border: none;
@@ -183,55 +256,68 @@
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
         </button>
-        <h1 id="drill-title">१. पायांची अचूक 'L' पोझिशन</h1>
+        <h1 id="drill-title">१/८. पायांची अचूक 'L' पोझिशन</h1>
+        
+        <!-- Animated Circular Countdown -->
+        <div class="timer-badge-container">
+            <svg class="timer-svg" viewBox="0 0 36 36">
+                <path class="timer-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <path id="timerProgress" class="timer-circle-progress" stroke-dasharray="100, 100" stroke-dashoffset="0" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            </svg>
+            <span id="timer-number">30s</span>
+        </div>
     </nav>
 
     <div id="canvas-wrapper">
         <canvas id="fencingCanvas"></canvas>
+        <div id="speedBadge" class="speed-badge"></div>
     </div>
 
-    <div class="hint-caption">स्क्रीन दाबून धरा: ०.२५x स्लो-मोशन | लाल त्रुटीवर टॅप करा: दुरुस्ती</div>
-
-    <div id="status-box"></div>
-
-    <div class="drill-grid">
-        <button class="grid-step-btn active" onclick="switchDrill(0)">१. 'L' पोझिशन</button>
-        <button class="grid-step-btn" onclick="switchDrill(1)">२. एन गार्डे</button>
-        <button class="grid-step-btn" onclick="switchDrill(2)">३. पाऊल क्रम</button>
-        <button class="grid-step-btn" onclick="switchDrill(3)">४. लेझर टिप</button>
-        <button class="grid-step-btn" onclick="switchDrill(4)">५. अटॅक</button>
-        <button class="grid-step-btn" onclick="switchDrill(5)">६. रॉकेट लंज</button>
-        <button class="grid-step-btn" onclick="switchDrill(6)">७. पॅरी ४</button>
-        <button class="grid-step-btn" onclick="switchDrill(7)">८. पॅरी ६</button>
+    <div class="info-panel">
+        <div id="status-box">दोन्ही पावले जवळ जोडून ताठ उभे राहा</div>
+        <div class="hint-caption">मागे दाबून धरा = स्लो-मोशन | पुढे दाबून धरा = फास्ट फॉरवर्ड</div>
     </div>
 
-    <div class="media-bar">
-        <button class="media-icon-btn" onclick="restartMasterTraining()" aria-label="Restart">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
-            </svg>
+    <!-- Navigation & Media Controls -->
+    <div class="bottom-control-bar">
+        <button class="step-nav-btn" id="btnPrev">
+            <span class="step-nav-title">◀ मागे</span>
+            <span class="step-nav-sub">दाबून धरा: स्लो</span>
         </button>
 
-        <button class="play-toggle-btn" id="playToggleBtn" onclick="togglePause()" aria-label="Play / Pause">
-            <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            <svg id="pauseIcon" style="display: none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="4" width="4" height="16"></rect>
-                <rect x="14" y="4" width="4" height="16"></rect>
-            </svg>
-        </button>
+        <div class="media-cluster">
+            <button class="media-icon-btn" onclick="restartMasterTraining()" aria-label="Restart">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
+                </svg>
+            </button>
 
-        <button class="media-icon-btn" id="audioToggleBtn" onclick="toggleAudio()" aria-label="Toggle Audio">
-            <svg id="audioOnIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            </svg>
-            <svg id="audioMuteIcon" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                <line x1="23" y1="9" x2="17" y2="15"></line>
-                <line x1="17" y1="9" x2="23" y2="15"></line>
-            </svg>
+            <button class="play-toggle-btn" id="playToggleBtn" onclick="togglePause()" aria-label="Play / Pause">
+                <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <svg id="pauseIcon" style="display: none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+            </button>
+
+            <button class="media-icon-btn" id="audioToggleBtn" onclick="toggleAudio()" aria-label="Toggle Audio">
+                <svg id="audioOnIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+                <svg id="audioMuteIcon" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+            </button>
+        </div>
+
+        <button class="step-nav-btn" id="btnNext">
+            <span class="step-nav-title">पुढे ▶</span>
+            <span class="step-nav-sub">दाबून धरा: फास्ट</span>
         </button>
     </div>
 
@@ -256,15 +342,21 @@ const canvas = document.getElementById('fencingCanvas');
 const ctx = canvas.getContext('2d');
 const statusBox = document.getElementById('status-box');
 const drillTitle = document.getElementById('drill-title');
-const drillBtns = document.querySelectorAll('.grid-step-btn');
+const timerProgress = document.getElementById('timerProgress');
+const timerNumber = document.getElementById('timer-number');
+const speedBadge = document.getElementById('speedBadge');
+
 const playIcon = document.getElementById('playIcon');
 const pauseIcon = document.getElementById('pauseIcon');
 const audioOnIcon = document.getElementById('audioOnIcon');
 const audioMuteIcon = document.getElementById('audioMuteIcon');
 
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+
 const BASE_WIDTH = 820;
-const BASE_HEIGHT = 420;
-const GROUND_Y = 312;
+const BASE_HEIGHT = 440;
+const GROUND_Y = 328;
 
 function setupHiDPI() {
     const dpr = window.devicePixelRatio || 1;
@@ -394,6 +486,11 @@ function resolveErrorCorrectionTap(clickX, clickY) {
     }
 }
 
+canvas.addEventListener('pointerup', (e) => {
+    const pos = getCanvasPointerPos(e);
+    resolveErrorCorrectionTap(pos.x, pos.y);
+});
+
 let hitStopUntil = 0;
 let screenShakeRemaining = 0;
 let screenShakeMagnitude = 0;
@@ -427,7 +524,7 @@ const TOTAL_MASTER_TIME = DRILL_DURATION * 8;
 const drillTimelineConfigs = [
     {
         drillId: 0,
-        title: "१. पायांची अचूक 'L' पोझिशन",
+        title: "१/८. पायांची अचूक 'L' पोझिशन",
         phases: [
             { startTime: 0, subPhase: 0, marathiText: "दोन्ही पावले जवळ ठेवा आणि सरळ उभे राहा.", status: "दोन्ही पावले जवळ जोडून ताठ उभे राहा" },
             { startTime: 9000, subPhase: 1, marathiText: "मागचा पाय नव्वद अंशात फिरवून एल आकार बनवा.", status: "पुढचा पाय सरळ, मागचा पाय ९० अंशात फिरवा" },
@@ -436,7 +533,7 @@ const drillTimelineConfigs = [
     },
     {
         drillId: 1,
-        title: "२. एन गार्डे व गुडघे समतोल",
+        title: "२/८. एन गार्डे व समतोल",
         phases: [
             { startTime: 0, subPhase: 0, marathiText: "पाय ताठ ठेवू नका, तोल जातो. गुडघे वाकवा.", status: "पाय ताठ ठेवू नका, गुडघ्यावर टॅप करा" },
             { startTime: 10000, subPhase: 1, marathiText: "गुडघे हलके वाकवून एन गार्डे स्प्रिंग करा.", status: "योग्य एन गार्डे: गुडघे ११०° किंचित वाकवा" }
@@ -444,7 +541,7 @@ const drillTimelineConfigs = [
     },
     {
         drillId: 2,
-        title: "३. पाऊल क्रम",
+        title: "३/८. पाऊल क्रम",
         phases: [
             { startTime: 0, subPhase: 0, marathiText: "पुढे जाताना: आधी पुढची टाच, मग मागचा पाय.", status: "पुढे: आधी टाच ➔ मग चवडा टेकवा" },
             { startTime: 11000, subPhase: 1, marathiText: "मागे येताना: आधी मागचा चवडा, मग पुढचा पाय.", status: "मागे: आधी चवडा ➔ मग टाच टेकवा" },
@@ -453,7 +550,7 @@ const drillTimelineConfigs = [
     },
     {
         drillId: 3,
-        title: "४. लेझर टिप",
+        title: "४/८. लेझर टिप",
         phases: [
             { startTime: 0, subPhase: 0, marathiText: "मनगट स्थिर करा, टोक छताकडे जाऊ देऊ नका.", status: "मनगटावर टॅप करून टोक सरळ करा" },
             { startTime: 8000, subPhase: 1, marathiText: "पुढे चालतानाही टोक छातीवर रोखून ठेवा.", status: "चालताना लेझर टोक छातीवरून हलू देऊ नका" },
@@ -462,17 +559,17 @@ const drillTimelineConfigs = [
     },
     {
         drillId: 4,
-        title: "५. बेसिक अटॅक",
+        title: "५/८. बेसिक अटॅक",
         phases: [
             { startTime: 0, subPhase: 0, marathiText: "एन गार्डे तयार राहा.", status: "एन गार्डे तयार राहा" },
             { startTime: 6000, subPhase: 1, marathiText: "हात आधी... मग पाय स्फोटक पुढे!", status: "आधी हात निघून रेषेत ➔ मग पाय वेगाने जमिनीवर" },
-            { startTime: 17500, subPhase: 2, marathiText: "टच! तोल स्थिर ठेवा.", status: "अचूक पॉईंट! डमीवर १ सेकंद स्पर्श स्थिर ठेवा" },
+            { startTime: 17500, subPhase: 2, marathiText: "टच! तोल स्थिर ठेवा.", status: "अचूक पॉईंट! डमीवर स्पर्श स्थिर ठेवा" },
             { startTime: 21500, subPhase: 3, marathiText: "सुरक्षित मागे या.", status: "सुरक्षित एन गार्डेवर रिकव्हर व्हा" }
         ]
     },
     {
         drillId: 5,
-        title: "६. रॉकेट लंज",
+        title: "६/८. रॉकेट लंज",
         phases: [
             { startTime: 0, subPhase: 0, marathiText: "लंजसाठी तयार राहा.", status: "लक्ष्य छातीवर रोखा, लंजसाठी तयार राहा" },
             { startTime: 6500, subPhase: 1, marathiText: "हात आधी, मागचा पाय स्थिर, रॉकेट लंज!", status: "हात आधी ➔ मागच्या पायाने धक्का ➔ ९०° अचूक लंज" },
@@ -482,7 +579,7 @@ const drillTimelineConfigs = [
     },
     {
         drillId: 6,
-        title: "७. पॅरी ४ आणि रिपोस्ट",
+        title: "७/८. पॅरी ४ आणि रिपोस्ट",
         phases: [
             { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण पाहा, अंतर राखा.", status: "प्रतिस्पर्ध्याचे आक्रमण ओळखा" },
             { startTime: 6000, subPhase: 1, marathiText: "मागे पाऊल, कोपर स्थिर, पॅरी चार!", status: "मागे पाऊल, कोपर स्थिर ठेवून पॅरी ४" },
@@ -492,7 +589,7 @@ const drillTimelineConfigs = [
     },
     {
         drillId: 7,
-        title: "८. पॅरी ६ आणि रिपोस्ट",
+        title: "८/८. पॅरी ६ आणि रिपोस्ट",
         phases: [
             { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण ओळखा.", status: "प्रतिस्पर्ध्याच्या आक्रमणाची दिशा ओळखा" },
             { startTime: 6000, subPhase: 1, marathiText: "अंगठा वर, उजवीकडे पॅरी सहा!", status: "मागे पाऊल, अंगठा वर, उजवीकडे पॅरी ६" },
@@ -505,15 +602,21 @@ const drillTimelineConfigs = [
 let effectiveElapsed = 0;
 let lastFrameTime = performance.now();
 let isPaused = true;
-let isSlowMo = false;
 let currentDrill = 0;
 let currentSubPhase = -1;
+let playbackMultiplier = 1.0;
 
 function updateDrillStateMachine(currentTimeMs) {
     const drillIdx = Math.floor(currentTimeMs / DRILL_DURATION);
     const localTime = currentTimeMs % DRILL_DURATION;
     const config = drillTimelineConfigs[drillIdx];
     if (!config) return;
+
+    // Countdown ring updates
+    const remainingSeconds = Math.max(0, Math.ceil((DRILL_DURATION - localTime) / 1000));
+    timerNumber.innerText = `${remainingSeconds}s`;
+    const progressPercent = (localTime / DRILL_DURATION) * 100;
+    timerProgress.setAttribute('stroke-dashoffset', progressPercent);
 
     let targetPhase = config.phases[0];
     for (let i = config.phases.length - 1; i >= 0; i--) {
@@ -529,33 +632,83 @@ function updateDrillStateMachine(currentTimeMs) {
 
         drillTitle.innerText = config.title;
         statusBox.innerText = targetPhase.status;
-        updateNavButtons();
         speakCoachingCue(targetPhase.marathiText);
     }
 }
 
-let pointerDownTime = 0;
-let holdTimeout = null;
+// Interactive Speed Controls (Hold to Fast/Slow)
+let holdTimer = null;
+let isHolding = false;
 
-canvas.addEventListener('pointerdown', (e) => {
+function setSpeedUI(speedText, isVisible) {
+    if (isVisible) {
+        speedBadge.innerText = speedText;
+        speedBadge.style.display = 'block';
+    } else {
+        speedBadge.style.display = 'none';
+    }
+}
+
+btnPrev.addEventListener('pointerdown', (e) => {
     initAudio();
-    pointerDownTime = performance.now();
-    holdTimeout = setTimeout(() => { isSlowMo = true; }, 180);
+    isHolding = false;
+    btnPrev.classList.add('holding');
+    holdTimer = setTimeout(() => {
+        isHolding = true;
+        playbackMultiplier = 0.25;
+        setSpeedUI("०.२५x स्लो-मोशन", true);
+    }, 240);
 });
 
-canvas.addEventListener('pointerup', (e) => {
-    clearTimeout(holdTimeout);
-    const holdDuration = performance.now() - pointerDownTime;
-    isSlowMo = false;
-    if (holdDuration < 240) {
-        const pos = getCanvasPointerPos(e);
-        resolveErrorCorrectionTap(pos.x, pos.y);
+btnPrev.addEventListener('pointerup', () => {
+    clearTimeout(holdTimer);
+    btnPrev.classList.remove('holding');
+    if (isHolding) {
+        playbackMultiplier = 1.0;
+        setSpeedUI("", false);
+        isHolding = false;
+    } else {
+        // Quick tap: jump back 1 drill
+        switchDrill(Math.max(0, currentDrill - 1));
     }
 });
 
-canvas.addEventListener('pointercancel', () => {
-    clearTimeout(holdTimeout);
-    isSlowMo = false;
+btnPrev.addEventListener('pointercancel', () => {
+    clearTimeout(holdTimer);
+    btnPrev.classList.remove('holding');
+    playbackMultiplier = 1.0;
+    setSpeedUI("", false);
+});
+
+btnNext.addEventListener('pointerdown', (e) => {
+    initAudio();
+    isHolding = false;
+    btnNext.classList.add('holding');
+    holdTimer = setTimeout(() => {
+        isHolding = true;
+        playbackMultiplier = 2.5;
+        setSpeedUI("२.५x फास्ट फॉरवर्ड", true);
+    }, 240);
+});
+
+btnNext.addEventListener('pointerup', () => {
+    clearTimeout(holdTimer);
+    btnNext.classList.remove('holding');
+    if (isHolding) {
+        playbackMultiplier = 1.0;
+        setSpeedUI("", false);
+        isHolding = false;
+    } else {
+        // Quick tap: jump forward 1 drill
+        switchDrill(Math.min(drillTimelineConfigs.length - 1, currentDrill + 1));
+    }
+});
+
+btnNext.addEventListener('pointercancel', () => {
+    clearTimeout(holdTimer);
+    btnNext.classList.remove('holding');
+    playbackMultiplier = 1.0;
+    setSpeedUI("", false);
 });
 
 function solveLegIK(hx, hy, ax, ay, l1, l2, bendForward = true) {
@@ -652,12 +805,6 @@ function drawAuthenticShoe(x, y, tiltDeg, isFront, isTurned90, facingLeft = fals
         ctx.beginPath();
         ctx.roundRect(-9, -2.5, 23, 2.5, [1, 1, 1, 1]);
         ctx.fill();
-
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(-2, -7); ctx.lineTo(2, -4);
-        ctx.stroke();
     }
     ctx.restore();
 }
@@ -698,15 +845,6 @@ function drawAuthenticMask(headX, headY, gazeTargetX, gazeTargetY, isOpponent, i
     ctx.beginPath();
     ctx.ellipse(headX, headY, 12.5, 15.5, 0, 0, Math.PI * 2);
     ctx.fill(); ctx.stroke();
-
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
-    ctx.lineWidth = 0.8;
-    for (let i = -8; i <= 8; i += 3.5) {
-        ctx.beginPath();
-        ctx.moveTo(headX + i, headY - 11);
-        ctx.lineTo(headX + i, headY + 11);
-        ctx.stroke();
-    }
     ctx.restore();
 }
 
@@ -717,30 +855,21 @@ function calculateEulerBladeBuckle(handX, handY, angleDeg, targetX, targetY, isF
     const undeflectedTipY = handY + Math.sin(rad) * bladeLen;
 
     if (targetX <= 0 || undeflectedTipX < targetX) {
-        return {
-            isBent: false,
-            p0: { x: handX, y: handY },
-            tip: { x: undeflectedTipX, y: undeflectedTipY }
-        };
+        return { isBent: false, p0: { x: handX, y: handY }, tip: { x: undeflectedTipX, y: undeflectedTipY } };
     }
 
     const tipX = targetX;
     const tipY = targetY;
     const penetration = undeflectedTipX - targetX;
-
     const nodeX = handX + (bladeLen * 0.68) * Math.cos(rad);
     const nodeY = handY + (bladeLen * 0.68) * Math.sin(rad);
-
     const normalAngle = rad + (isFlankHit ? (Math.PI / 2) : (-Math.PI / 2));
     const buckleDepth = 10.0 + (penetration * 0.82);
-
-    const ctrlX = nodeX + Math.cos(normalAngle) * buckleDepth;
-    const ctrlY = nodeY + Math.sin(normalAngle) * buckleDepth;
 
     return {
         isBent: true,
         p0: { x: handX, y: handY },
-        pCtrl: { x: ctrlX, y: ctrlY },
+        pCtrl: { x: nodeX + Math.cos(normalAngle) * buckleDepth, y: nodeY + Math.sin(normalAngle) * buckleDepth },
         tip: { x: tipX, y: tipY }
     };
 }
@@ -766,11 +895,8 @@ function drawAuthenticFoil(handX, handY, angleDeg, targetX, targetY, isFlankHit 
     ctx.lineCap = 'round';
 
     if (spine.isBent) {
-        if (!wasInContactPreviousFrame) {
-            triggerHitStop(75, 4.2);
-        }
+        if (!wasInContactPreviousFrame) triggerHitStop(75, 4.2);
         wasInContactPreviousFrame = true;
-
         ctx.strokeStyle = '#e2e8f0';
         ctx.lineWidth = 2.0;
         ctx.beginPath();
@@ -815,13 +941,12 @@ function drawU10Fencer(cfg) {
         targetSurfaceY = 0,
         isFlankHit = false,
         isError = false,
-        rearArmActiveLunge = 0,
         gazeTargetX = 0,
         gazeTargetY = 0
     } = cfg;
 
-    const femur = 46;
-    const tibia = 43;
+    const femur = 48;
+    const tibia = 45;
 
     const rearHipX = pelvisX - 5;
     const rearHipY = pelvisY;
@@ -838,7 +963,7 @@ function drawU10Fencer(cfg) {
     drawAuthenticShoe(frontFootX, frontFootY, frontTilt, true, false, false);
 
     const shoulderX = pelvisX + 3 + (torsoIncline * 10);
-    const shoulderY = pelvisY - 50;
+    const shoulderY = pelvisY - 52;
 
     drawFoilLameVest(pelvisX, pelvisY, shoulderX, shoulderY, false, isError);
 
@@ -875,7 +1000,7 @@ function drawU10Fencer(cfg) {
         ctx.restore();
         drawAuthenticFoil(handX, handY, bladeAngle, 0, 0, false);
     } else {
-        const maxReach = 44;
+        const maxReach = 46;
         const currentReach = 24 + (armExtension * (maxReach - 24));
         handX = fShoulderX + currentReach;
         handY = fShoulderY - (armExtension * 3.0);
@@ -917,8 +1042,8 @@ function drawSternumTarget(x, y) {
     ctx.restore();
 }
 
-function drawOpponentFencer(baseRearX, groundY, attackP, parryEngagement, riposteProgress, isParry6, rivaGuardX, rivaGuardY) {
-    const femur = 46, tibia = 43;
+function drawOpponentFencer(baseRearX, groundY, attackP) {
+    const femur = 48, tibia = 45;
     const baseStance = 48;
     const advanceDist = 38;
     const maxLungeSplit = 62;
@@ -953,7 +1078,7 @@ function drawOpponentFencer(baseRearX, groundY, attackP, parryEngagement, ripost
     }
 
     const shoulderX = pelvisX - 3;
-    const shoulderY = pelvisY - 50;
+    const shoulderY = pelvisY - 52;
 
     const frontIK = solveLegIK(pelvisX - 5, pelvisY, frontFootX, frontFootY - 6, femur, tibia, false);
     const rearIK = solveLegIK(pelvisX + 5, pelvisY, rearFootX, groundY - 6, femur, tibia, true);
@@ -989,7 +1114,7 @@ function renderDrill1_LStance(t) {
     }
 
     drawU10Fencer({
-        pelvisX: fencerX, pelvisY: 242,
+        pelvisX: fencerX, pelvisY: 254,
         frontFootX: fencerX + (stanceWidth / 2), frontFootY: GROUND_Y,
         rearFootX: fencerX - (stanceWidth / 2), rearFootY: GROUND_Y,
         rearFootTurned90: rearTurned,
@@ -1006,13 +1131,13 @@ function renderDrill2_EnGarde(t) {
     clearErrorZones();
 
     if (phase === 0) {
-        registerErrorZone('d2_knee', fencerX, 260, 28, () => {
+        registerErrorZone('d2_knee', fencerX, 270, 28, () => {
             effectiveElapsed = 1 * DRILL_DURATION + 10005;
         });
     }
 
     drawU10Fencer({
-        pelvisX: fencerX, pelvisY: 242 + pelvisDrop,
+        pelvisX: fencerX, pelvisY: 254 + pelvisDrop,
         frontFootX: fencerX + 24, frontFootY: GROUND_Y,
         rearFootX: fencerX - 24, rearFootY: GROUND_Y,
         rearFootTurned90: true,
@@ -1066,7 +1191,7 @@ function renderDrill3_StepSequence(t) {
     }
 
     drawU10Fencer({
-        pelvisX: centerX + pelvisOffset, pelvisY: 254 + pelvicMicroRise,
+        pelvisX: centerX + pelvisOffset, pelvisY: 266 + pelvicMicroRise,
         frontFootX: frontX, frontFootY: frontY, frontTilt: frontTilt,
         rearFootX: backX, rearFootY: backY, rearTilt: rearTilt,
         rearFootTurned90: true
@@ -1076,7 +1201,7 @@ function renderDrill3_StepSequence(t) {
 function renderDrill4_LaserTip(t) {
     drawFencingStrip(GROUND_Y);
     clearErrorZones();
-    const targetX = 660, targetY = 214;
+    const targetX = 660, targetY = 224;
     drawSternumTarget(targetX, targetY);
 
     const baseStance = 48;
@@ -1087,13 +1212,13 @@ function renderDrill4_LaserTip(t) {
     if (t < 8000) {
         tipAngle = -36;
         isError = true;
-        registerErrorZone('d4_wrist', startX + 32, 218, 25, () => {
+        registerErrorZone('d4_wrist', startX + 32, 228, 25, () => {
             effectiveElapsed = 3 * DRILL_DURATION + 8005;
         });
     }
 
     drawU10Fencer({
-        pelvisX: startX, pelvisY: 254,
+        pelvisX: startX, pelvisY: 266,
         frontFootX: startX + baseStance / 2, frontFootY: GROUND_Y,
         rearFootX: startX - baseStance / 2, rearFootY: GROUND_Y,
         rearFootTurned90: true,
@@ -1107,11 +1232,11 @@ function renderDrill4_LaserTip(t) {
 function renderDrill5_BasicAttack(t) {
     drawFencingStrip(GROUND_Y);
     clearErrorZones();
-    const targetX = 540, targetY = 226;
+    const targetX = 540, targetY = 236;
     drawTrainingDummy(targetX, GROUND_Y, targetY);
 
     drawU10Fencer({
-        pelvisX: 300, pelvisY: 254,
+        pelvisX: 300, pelvisY: 266,
         frontFootX: 324, frontFootY: GROUND_Y,
         rearFootX: 276, rearFootY: GROUND_Y,
         rearFootTurned90: true,
@@ -1124,11 +1249,11 @@ function renderDrill5_BasicAttack(t) {
 function renderDrill6_Lunge(t) {
     drawFencingStrip(GROUND_Y);
     clearErrorZones();
-    const targetX = 540, targetY = 226;
+    const targetX = 540, targetY = 236;
     drawTrainingDummy(targetX, GROUND_Y, targetY);
 
     drawU10Fencer({
-        pelvisX: 290, pelvisY: 260,
+        pelvisX: 290, pelvisY: 272,
         frontFootX: 340, frontFootY: GROUND_Y,
         rearFootX: 240, rearFootY: GROUND_Y,
         rearFootTurned90: true,
@@ -1141,9 +1266,9 @@ function renderDrill6_Lunge(t) {
 function renderDrill7_Parry4(t) {
     drawFencingStrip(GROUND_Y);
     clearErrorZones();
-    drawOpponentFencer(490, GROUND_Y, 0.5, 0.5, 0, false, 260, 224);
+    drawOpponentFencer(490, GROUND_Y, 0.5);
     drawU10Fencer({
-        pelvisX: 230, pelvisY: 254,
+        pelvisX: 230, pelvisY: 266,
         frontFootX: 254, frontFootY: GROUND_Y,
         rearFootX: 206, rearFootY: GROUND_Y,
         rearFootTurned90: true,
@@ -1154,9 +1279,9 @@ function renderDrill7_Parry4(t) {
 function renderDrill8_Parry6(t) {
     drawFencingStrip(GROUND_Y);
     clearErrorZones();
-    drawOpponentFencer(490, GROUND_Y, 0.5, 0.5, 0, true, 260, 224);
+    drawOpponentFencer(490, GROUND_Y, 0.5);
     drawU10Fencer({
-        pelvisX: 230, pelvisY: 254,
+        pelvisX: 230, pelvisY: 266,
         frontFootX: 254, frontFootY: GROUND_Y,
         rearFootX: 206, rearFootY: GROUND_Y,
         rearFootTurned90: true,
@@ -1170,8 +1295,7 @@ function render() {
     lastFrameTime = now;
 
     if (now >= hitStopUntil && !isPaused) {
-        const speed = isSlowMo ? 0.25 : 1.0;
-        effectiveElapsed = (effectiveElapsed + dt * speed) % TOTAL_MASTER_TIME;
+        effectiveElapsed = (effectiveElapsed + dt * playbackMultiplier) % TOTAL_MASTER_TIME;
         updateDrillStateMachine(effectiveElapsed);
     }
 
@@ -1203,13 +1327,6 @@ function switchDrill(drillIdx) {
     currentSubPhase = -1;
     lastFrameTime = performance.now();
     updateDrillStateMachine(effectiveElapsed);
-}
-
-function updateNavButtons() {
-    drillBtns.forEach((b, i) => {
-        if (i === currentDrill) b.classList.add('active');
-        else b.classList.remove('active');
-    });
 }
 
 function restartMasterTraining() {
