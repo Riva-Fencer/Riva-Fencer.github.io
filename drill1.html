@@ -13,7 +13,7 @@
 
 <div class="drill-viewport">
 
-    <!-- Main Stage (Header + Canvas + Coach Pill) -->
+    <!-- Main Stage (Header + Maximized Canvas + Coach Pill) -->
     <div class="main-stage">
         
         <header class="top-header">
@@ -130,22 +130,31 @@ const audioMuteIcon = document.getElementById('audioMuteIcon');
 const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 
+// Base World Dimensions
 const BASE_WIDTH = 820;
 const BASE_HEIGHT = 440;
 const GROUND_Y = 328;
 
-// Dynamic cold-launch viewport stabilizer
+// Dynamic Camera & Screen System
+const camera = { x: 410, y: 240, zoom: 1.0 };
+let currentCssWidth = 820;
+let currentCssHeight = 440;
+
 function syncViewportAndCanvas() {
     const actualHeight = window.innerHeight;
     document.documentElement.style.setProperty('--app-height', `${actualHeight}px`);
 
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = BASE_WIDTH * dpr;
-    canvas.height = BASE_HEIGHT * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+        currentCssWidth = rect.width;
+        currentCssHeight = rect.height;
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+    }
 }
 
-// Multi-stage burst execution on cold launch
+// Multi-stage cold launch sync
 syncViewportAndCanvas();
 setTimeout(syncViewportAndCanvas, 50);
 setTimeout(syncViewportAndCanvas, 150);
@@ -205,30 +214,36 @@ function clearErrorZones() {
     activeErrorZones = [];
 }
 
+// Convert touch coordinates using exact camera matrix
 function getCanvasPointerPos(evt) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = BASE_WIDTH / rect.width;
-    const scaleY = BASE_HEIGHT / rect.height;
     const clientX = evt.clientX !== undefined ? evt.clientX : (evt.touches && evt.touches[0] ? evt.touches[0].clientX : 0);
     const clientY = evt.clientY !== undefined ? evt.clientY : (evt.touches && evt.touches[0] ? evt.touches[0].clientY : 0);
-    return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
-    };
+
+    const cssX = clientX - rect.left;
+    const cssY = clientY - rect.top;
+
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const worldX = (cssX - centerX) / camera.zoom + camera.x;
+    const worldY = (cssY - centerY) / camera.zoom + camera.y;
+
+    return { x: worldX, y: worldY };
 }
 
 function spawnSuccessRipple(x, y) {
-    visualRipples.push({ x, y, radius: 10, maxRadius: 40, alpha: 1.0, color: '#22c55e' });
+    visualRipples.push({ x, y, radius: 10, maxRadius: 46, alpha: 1.0, color: '#22c55e' });
 }
 
 function spawnMissNotice(x, y) {
-    visualRipples.push({ x, y, radius: 5, maxRadius: 24, alpha: 0.8, color: '#ef4444' });
+    visualRipples.push({ x, y, radius: 5, maxRadius: 28, alpha: 0.8, color: '#ef4444' });
 }
 
 function updateAndDrawRipples() {
     for (let i = visualRipples.length - 1; i >= 0; i--) {
         const r = visualRipples[i];
-        r.radius += 2.0;
+        r.radius += 2.2;
         r.alpha -= 0.04;
         if (r.alpha <= 0) {
             visualRipples.splice(i, 1);
@@ -237,7 +252,7 @@ function updateAndDrawRipples() {
         ctx.save();
         ctx.strokeStyle = r.color;
         ctx.globalAlpha = r.alpha;
-        ctx.lineWidth = 2.4;
+        ctx.lineWidth = 2.8;
         ctx.beginPath();
         ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
         ctx.stroke();
@@ -246,28 +261,36 @@ function updateAndDrawRipples() {
 }
 
 function drawActiveErrorReticles() {
-    const pulse = Math.sin(performance.now() * 0.008) * 4;
+    const pulse = Math.sin(performance.now() * 0.008) * 5;
     activeErrorZones.forEach(zone => {
         ctx.save();
         ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 2.2;
+        ctx.lineWidth = 2.6;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.arc(zone.x, zone.y, zone.radius + pulse, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.22)';
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
+        ctx.fill();
+
+        // Inner glowing core
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(zone.x, zone.y, 4, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
     });
 }
 
+// Generous touch hit detection so children never miss
 function resolveErrorCorrectionTap(clickX, clickY) {
     let corrected = false;
     for (let i = activeErrorZones.length - 1; i >= 0; i--) {
         const zone = activeErrorZones[i];
+        const hitRadius = Math.max(zone.radius * 1.5, 42); // 42+ world units hit tolerance
         const dist = Math.hypot(clickX - zone.x, clickY - zone.y);
-        if (dist <= zone.radius) {
+        if (dist <= hitRadius) {
             spawnSuccessRipple(zone.x, zone.y);
             zone.onCorrect();
             corrected = true;
@@ -294,21 +317,6 @@ function triggerHitStop(freezeMs, shakeIntensity) {
     hitStopUntil = now + freezeMs;
     screenShakeRemaining = freezeMs;
     screenShakeMagnitude = shakeIntensity;
-}
-
-function applyCameraTransform() {
-    ctx.save();
-    if (screenShakeRemaining > 0) {
-        const shakeX = (Math.random() - 0.5) * screenShakeMagnitude * 2;
-        const shakeY = (Math.random() - 0.5) * screenShakeMagnitude * 2;
-        ctx.translate(shakeX, shakeY);
-        screenShakeRemaining -= 16.6;
-        if (screenShakeRemaining <= 0) screenShakeMagnitude = 0;
-    }
-}
-
-function restoreCameraTransform() {
-    ctx.restore();
 }
 
 const DRILL_DURATION = 30000;
@@ -428,7 +436,7 @@ function updateDrillStateMachine(currentTimeMs) {
     }
 }
 
-// Hold gesture handlers for Speed & Skipping
+// Hold gesture controls for Fast-Forward and Slow-Motion
 let holdTimer = null;
 let isHolding = false;
 
@@ -716,86 +724,6 @@ function drawFencingStrip(groundY) {
     ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(BASE_WIDTH, groundY); ctx.stroke();
 }
 
-function drawTrainingDummy(x, groundY, targetY) {
-    ctx.save();
-    ctx.fillStyle = '#1e293b';
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(x + 2, groundY - 8, 48, 8, [4, 4, 1, 1]);
-    ctx.fill(); ctx.stroke();
-
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(x + 22, targetY - 45, 8, groundY - (targetY - 45));
-
-    ctx.fillStyle = '#1e293b';
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(x - 2, targetY - 40, 24, 76, [8, 8, 8, 8]);
-    ctx.fill(); ctx.stroke();
-    ctx.restore();
-}
-
-function drawSternumTarget(x, y) {
-    ctx.save();
-    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x, y, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
-}
-
-function drawOpponentFencer(baseRearX, groundY, attackP) {
-    const femur = 54, tibia = 50;
-    const baseStance = 48;
-    const advanceDist = 38;
-    const maxLungeSplit = 62;
-
-    let rearFootX, frontFootX, pelvisX, pelvisY;
-    let frontTilt = 0, rearTilt = 0, frontFootY = groundY;
-
-    if (attackP < 0.35) {
-        const advP = attackP / 0.35;
-        if (advP < 0.5) {
-            const subP = advP / 0.5;
-            rearFootX = baseRearX;
-            frontFootX = (baseRearX - baseStance) - (subP * advanceDist);
-            frontTilt = 18 * Math.sin(subP * Math.PI);
-            frontFootY = groundY - (4.0 * Math.sin(subP * Math.PI));
-            pelvisX = (baseRearX - 24) - (subP * advanceDist * 0.5);
-        } else {
-            const subP = (advP - 0.5) / 0.5;
-            frontFootX = (baseRearX - baseStance) - advanceDist;
-            rearFootX = baseRearX - (subP * advanceDist);
-            rearTilt = -12 * Math.sin(subP * Math.PI);
-            pelvisX = (baseRearX - 24) - (advanceDist * 0.5) - (subP * advanceDist * 0.5);
-        }
-        pelvisY = groundY - 62;
-    } else {
-        const lungeSubP = (attackP - 0.35) / 0.65;
-        rearFootX = baseRearX - advanceDist;
-        frontFootX = (rearFootX - baseStance) - (lungeSubP * maxLungeSplit);
-        pelvisX = (rearFootX - 24) - (lungeSubP * 38);
-        const pelvisDrop = Math.pow(lungeSubP, 2.5) * 16;
-        pelvisY = groundY - 62 + pelvisDrop;
-    }
-
-    const shoulderX = pelvisX - 4;
-    const shoulderY = pelvisY - 58;
-
-    const frontIK = solveLegIK(pelvisX - 6, pelvisY, frontFootX, frontFootY - 7, femur, tibia, false);
-    const rearIK = solveLegIK(pelvisX + 6, pelvisY, rearFootX, groundY - 7, femur, tibia, true);
-
-    drawAnatomicalContouredLeg(pelvisX + 6, pelvisY, rearIK.kx, rearIK.ky, rearFootX, groundY - 7, false);
-    drawAnatomicalContouredLeg(pelvisX - 6, pelvisY, frontIK.kx, frontIK.ky, frontFootX, frontFootY - 7, true);
-
-    drawAuthenticShoe(rearFootX, groundY, rearTilt, false, true, false);
-    drawAuthenticShoe(frontFootX, frontFootY, frontTilt, true, false, true);
-
-    drawFoilLameVest(pelvisX, pelvisY, shoulderX, shoulderY, true, false);
-    drawAuthenticMask(shoulderX - 4, shoulderY - 20, 0, 0, true, false);
-}
-
 function drawU10Fencer(cfg) {
     const {
         pelvisX, pelvisY,
@@ -890,7 +818,8 @@ function renderDrill1_LStance(t) {
 
     if (phase === 0) {
         stanceWidth = 16; rearTurned = false;
-        registerErrorZone('d1_foot', fencerX - 8, GROUND_Y - 9, 26, () => {
+        // Interactive Error Zone centered on feet
+        registerErrorZone('d1_foot', fencerX - 8, GROUND_Y - 9, 28, () => {
             effectiveElapsed = 0 * DRILL_DURATION + 9005;
         });
     } else if (phase === 1) {
@@ -931,148 +860,6 @@ function renderDrill2_EnGarde(t) {
     });
 }
 
-function renderDrill3_StepSequence(t) {
-    drawFencingStrip(GROUND_Y);
-    clearErrorZones();
-    const baseStance = 48;
-    const stepDist = 38;
-    const centerX = 400;
-    const startFrontX = centerX + baseStance / 2;
-    const startBackX = centerX - baseStance / 2;
-
-    let frontX = startFrontX, backX = startBackX;
-    let frontTilt = 0, rearTilt = 0, frontY = GROUND_Y, backY = GROUND_Y;
-    let pelvisOffset = 0, pelvicMicroRise = 0;
-
-    if (t < 11000) {
-        const p = Math.min(1, Math.max(0, (t - 1500) / 7500));
-        if (p < 0.5) {
-            const subP = p / 0.5;
-            backX = startBackX;
-            frontX = startFrontX + (subP * stepDist);
-            pelvisOffset = subP * (stepDist * 0.5);
-            pelvicMicroRise = -2.2 * Math.sin(subP * Math.PI);
-        } else {
-            const subP = (p - 0.5) / 0.5;
-            frontX = startFrontX + stepDist;
-            backX = startBackX + (subP * stepDist);
-            pelvisOffset = (stepDist * 0.5) + (subP * stepDist * 0.5);
-            pelvicMicroRise = -1.8 * Math.sin(subP * Math.PI);
-        }
-    } else {
-        const p = Math.min(1, Math.max(0, (t - 12500) / 7500));
-        const advancedFrontX = startFrontX + stepDist;
-        const advancedBackX = startBackX + stepDist;
-        if (p < 0.5) {
-            const subP = p / 0.5;
-            frontX = advancedFrontX;
-            backX = advancedBackX - (subP * stepDist);
-            pelvisOffset = stepDist - (subP * (stepDist * 0.5));
-        } else {
-            const subP = (p - 0.5) / 0.5;
-            backX = startBackX;
-            frontX = advancedFrontX - (subP * stepDist);
-            pelvisOffset = (stepDist * 0.5) - (subP * stepDist * 0.5);
-        }
-    }
-
-    drawU10Fencer({
-        pelvisX: centerX + pelvisOffset, pelvisY: 254 + pelvicMicroRise,
-        frontFootX: frontX, frontFootY: frontY, frontTilt: frontTilt,
-        rearFootX: backX, rearFootY: backY, rearTilt: rearTilt,
-        rearFootTurned90: true
-    });
-}
-
-function renderDrill4_LaserTip(t) {
-    drawFencingStrip(GROUND_Y);
-    clearErrorZones();
-    const targetX = 660, targetY = 224;
-    drawSternumTarget(targetX, targetY);
-
-    const baseStance = 48;
-    const startX = 260;
-    let tipAngle = -3;
-    let isError = false;
-
-    if (t < 8000) {
-        tipAngle = -36;
-        isError = true;
-        registerErrorZone('d4_wrist', startX + 32, 228, 25, () => {
-            effectiveElapsed = 3 * DRILL_DURATION + 8005;
-        });
-    }
-
-    drawU10Fencer({
-        pelvisX: startX, pelvisY: 254,
-        frontFootX: startX + baseStance / 2, frontFootY: GROUND_Y,
-        rearFootX: startX - baseStance / 2, rearFootY: GROUND_Y,
-        rearFootTurned90: true,
-        bladeAngle: tipAngle,
-        isError: isError
-    });
-}
-
-function renderDrill5_BasicAttack(t) {
-    drawFencingStrip(GROUND_Y);
-    clearErrorZones();
-    const targetX = 540, targetY = 236;
-    drawTrainingDummy(targetX, GROUND_Y, targetY);
-
-    drawU10Fencer({
-        pelvisX: 300, pelvisY: 254,
-        frontFootX: 324, frontFootY: GROUND_Y,
-        rearFootX: 276, rearFootY: GROUND_Y,
-        rearFootTurned90: true,
-        armState: 'attack', armExtension: 0.6,
-        bladeAngle: -2.0,
-        targetSurfaceX: targetX, targetSurfaceY: targetY
-    });
-}
-
-function renderDrill6_Lunge(t) {
-    drawFencingStrip(GROUND_Y);
-    clearErrorZones();
-    const targetX = 540, targetY = 236;
-    drawTrainingDummy(targetX, GROUND_Y, targetY);
-
-    drawU10Fencer({
-        pelvisX: 290, pelvisY: 260,
-        frontFootX: 340, frontFootY: GROUND_Y,
-        rearFootX: 240, rearFootY: GROUND_Y,
-        rearFootTurned90: true,
-        armState: 'lunge', armExtension: 1.0,
-        bladeAngle: -2.5,
-        targetSurfaceX: targetX, targetSurfaceY: targetY
-    });
-}
-
-function renderDrill7_Parry4(t) {
-    drawFencingStrip(GROUND_Y);
-    clearErrorZones();
-    drawOpponentFencer(490, GROUND_Y, 0.5);
-    drawU10Fencer({
-        pelvisX: 230, pelvisY: 254,
-        frontFootX: 254, frontFootY: GROUND_Y,
-        rearFootX: 206, rearFootY: GROUND_Y,
-        rearFootTurned90: true,
-        bladeAngle: -4.0
-    });
-}
-
-function renderDrill8_Parry6(t) {
-    drawFencingStrip(GROUND_Y);
-    clearErrorZones();
-    drawOpponentFencer(490, GROUND_Y, 0.5);
-    drawU10Fencer({
-        pelvisX: 230, pelvisY: 254,
-        frontFootX: 254, frontFootY: GROUND_Y,
-        rearFootX: 206, rearFootY: GROUND_Y,
-        rearFootTurned90: true,
-        bladeAngle: 2.5
-    });
-}
-
 function render() {
     const now = performance.now();
     const dt = now - lastFrameTime;
@@ -1083,23 +870,52 @@ function render() {
         updateDrillStateMachine(effectiveElapsed);
     }
 
-    ctx.clearRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
-    applyCameraTransform();
+    const dpr = window.devicePixelRatio || 1;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Dynamic Camera Framing
+    const isPortrait = currentCssHeight > currentCssWidth;
+    if (isPortrait) {
+        // High-definition Zoom in portrait mode for heroic character sizing
+        const scale = (currentCssHeight / BASE_HEIGHT) * 1.82;
+        camera.zoom = scale;
+        camera.x = 410;
+        camera.y = 246;
+    } else {
+        // Standard wide arena framing in landscape mode
+        const scaleX = currentCssWidth / BASE_WIDTH;
+        const scaleY = currentCssHeight / BASE_HEIGHT;
+        camera.zoom = Math.min(scaleX, scaleY);
+        camera.x = BASE_WIDTH / 2;
+        camera.y = BASE_HEIGHT / 2;
+    }
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
+    // Apply Camera translation and zoom
+    ctx.translate(currentCssWidth / 2, currentCssHeight / 2);
+    ctx.scale(camera.zoom, camera.zoom);
+    ctx.translate(-camera.x, -camera.y);
+
+    if (screenShakeRemaining > 0) {
+        const shakeX = (Math.random() - 0.5) * screenShakeMagnitude * 2;
+        const shakeY = (Math.random() - 0.5) * screenShakeMagnitude * 2;
+        ctx.translate(shakeX, shakeY);
+        screenShakeRemaining -= 16.6;
+        if (screenShakeRemaining <= 0) screenShakeMagnitude = 0;
+    }
 
     const drillElapsed = effectiveElapsed % DRILL_DURATION;
 
     if (currentDrill === 0) renderDrill1_LStance(drillElapsed);
     else if (currentDrill === 1) renderDrill2_EnGarde(drillElapsed);
-    else if (currentDrill === 2) renderDrill3_StepSequence(drillElapsed);
-    else if (currentDrill === 3) renderDrill4_LaserTip(drillElapsed);
-    else if (currentDrill === 4) renderDrill5_BasicAttack(drillElapsed);
-    else if (currentDrill === 5) renderDrill6_Lunge(drillElapsed);
-    else if (currentDrill === 6) renderDrill7_Parry4(drillElapsed);
-    else if (currentDrill === 7) renderDrill8_Parry6(drillElapsed);
+    else renderDrill1_LStance(drillElapsed);
 
     drawActiveErrorReticles();
     updateAndDrawRipples();
-    restoreCameraTransform();
+
+    ctx.restore();
 
     requestAnimationFrame(render);
 }
