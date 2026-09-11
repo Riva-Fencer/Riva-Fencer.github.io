@@ -1,6 +1,6 @@
 /**
  * Riva Fencer - Cartridge 001
- * Exact Original Biomechanics & IK from Riva Drill 1.html
+ * Contains all 8 original sub-drills with Next/Prev stepping
  */
 (function () {
     let ctx, BASE_WIDTH = 820, BASE_HEIGHT = 420, GROUND_Y = 312;
@@ -8,10 +8,13 @@
     let isPaused = true;
     let effectiveElapsed = 0;
     let lastFrameTime = performance.now();
+    let currentDrill = 0; // 0 to 7 (Sub-drills 1 to 8)
+    let currentSubPhase = -1;
+    let isSlowMo = false;
     const DRILL_DURATION = 30000;
 
     // -------------------------------------------------------------
-    // WEAKNESS 1: SPATIAL HIT-TESTING & ERROR RETICLE REGISTRY
+    // HIT-TESTING & ERROR RETICLES
     // -------------------------------------------------------------
     let activeErrorZones = [];
     let visualRipples = [];
@@ -93,7 +96,7 @@
     }
 
     // -------------------------------------------------------------
-    // WEAKNESS 2: HIT-STOP & DYNAMIC SCREEN SHAKE ENGINE
+    // HIT-STOP & CAMERA SHAKE
     // -------------------------------------------------------------
     let hitStopUntil = 0;
     let screenShakeRemaining = 0;
@@ -126,7 +129,88 @@
     }
 
     // -------------------------------------------------------------
-    // INVERSE KINEMATICS & ANATOMICAL RENDERING (YOUR ORIGINAL CODE)
+    // TIMELINE CONFIGURATIONS (ALL 8 SUB-DRILLS)
+    // -------------------------------------------------------------
+    const drillTimelineConfigs = [
+        {
+            drillId: 0,
+            title: "📐 १. पायांची अचूक 'L' पोझिशन",
+            phases: [
+                { startTime: 0, subPhase: 0, marathiText: "दोन्ही पावले जवळ ठेवा आणि सरळ उभे राहा.", englishText: "Stand upright with both feet together.", status: "१. दोन्ही पावले जवळ जोडून ताठ उभे राहा. (लाल त्रुटीवर टॅप करा)", color: "#ef4444" },
+                { startTime: 9000, subPhase: 1, marathiText: "मागचा पाय नव्वद अंशात फिरवून एल आकार बनवा.", englishText: "Turn the rear foot 90 degrees to form an L.", status: "२. पुढचा पाय सरळ ठेवून, मागचा पाय ९० अंशात फिरवा ('L' आकार)!", color: "#facc15" },
+                { startTime: 18000, subPhase: 2, marathiText: "शाब्बास रीवा, अचूक एल पोझिशन तयार झाली आहे!", englishText: "Excellent Riva, perfect L-stance base achieved!", status: "✅ अचूक 'L' कोन आणि खांद्याइतके नैसर्गिक अंतर पूर्ण!", color: "#22c55e" }
+            ]
+        },
+        {
+            drillId: 1,
+            title: "🦵 २. योग्य एन गार्डे – समतोल गुडघे वाकवणे",
+            phases: [
+                { startTime: 0, subPhase: 0, marathiText: "पाय ताठ ठेवू नका, तोल जातो. गुडघे वाकवा.", englishText: "Do not lock your knees. Bend your legs.", status: "❌ चूक: पाय ताठ ठेवल्यास शरीराची चपळता संपते! (गुडघ्यावर टॅप करा)", color: "#ef4444" },
+                { startTime: 10000, subPhase: 1, marathiText: "गुडघे हलके वाकवून एन गार्डे स्प्रिंग करा.", englishText: "Bend knees 110 degrees like loaded springs.", status: "✅ योग्य एन गार्डे: गुडघे ११०°-१२०° किंचित वाकवून स्प्रिंगसारखे तयार ठेवा!", color: "#22c55e" }
+            ]
+        },
+        {
+            drillId: 2,
+            title: "🦶 ३. पाऊल क्रम (पुढे: टाच ➔ चवडा | मागे: चवडा ➔ टाच)",
+            phases: [
+                { startTime: 0, subPhase: 0, marathiText: "पुढे जाताना: आधी पुढची टाच, मग मागचा पाय.", englishText: "Advancing: front heel touches first, then rear foot.", status: "➡️ पुढे: पुढचा पाय लीडर (आधी टाच ➔ मग चवडा टेकवा)!", color: "#38bdf8" },
+                { startTime: 11000, subPhase: 1, marathiText: "मागे येताना: आधी मागचा चवडा, मग पुढचा पाय.", englishText: "Retreating: rear ball of foot touches first, then heel.", status: "⬅️ मागे: मागचा पाय लीडर (आधी चवडा ➔ मग टाच टेकवा)!", color: "#4ade80" },
+                { startTime: 22000, subPhase: 2, marathiText: "शाब्बास रीवा, पाऊल क्रम परिपूर्ण!", englishText: "Well done Riva! Perfect rhythmic foot sequence!", status: "🎯 शाब्बास रीवा! पाऊल क्रम १०० टक्के परिपूर्ण!", color: "#22c55e" }
+            ]
+        },
+        {
+            drillId: 3,
+            title: "🎯 ४. लेझर टिप – टोक छातीवर रोखा",
+            phases: [
+                { startTime: 0, subPhase: 0, marathiText: "मनगट स्थिर करा, टोक छताकडे जाऊ देऊ नका.", englishText: "Stabilize wrist! Keep the point directed at the chest.", status: "❌ चूक: टोक छताकडे गेले आहे! (मनगटावर टॅप करून टोक सरळ करा)", color: "#ef4444" },
+                { startTime: 8000, subPhase: 1, marathiText: "पुढे चालतानाही टोक छातीवर रोखून ठेवा.", englishText: "Advance while keeping the laser point locked on chest.", status: "🦶 पुढे चालतानाही लेझर टोक छातीवरून हलू देऊ नका (टाच ➔ चवडा)!", color: "#38bdf8" },
+                { startTime: 18000, subPhase: 2, marathiText: "मागे सरकतानाही अचूक लेझर लॉक!", englishText: "Retreating with absolute laser point discipline!", status: "🎯 मागे सरकतानाही लेझर थेट छातीवर १००% लॉक! उत्कृष्ट तोल!", color: "#22c55e" }
+            ]
+        },
+        {
+            drillId: 4,
+            title: "🤺 ५. बेसिक अटॅक – आधी हात ➔ मग पाऊल",
+            phases: [
+                { startTime: 0, subPhase: 0, marathiText: "एन गार्डे तयार राहा.", englishText: "En Garde, ready to initiate attack.", status: "१. एन गार्डे तयार राहा - कोपर शरीराच्या समोर.", color: "#38bdf8" },
+                { startTime: 6000, subPhase: 1, marathiText: "हात आधी... मग पाय स्फोटक पुढे!", englishText: "Arm extends first for Right of Way, then explosive advance!", status: "२. आधी हात निघून रेषेत (Right of Way) ➔ मग पाय वेगाने जमिनीवर!", color: "#facc15" },
+                { startTime: 17500, subPhase: 2, marathiText: "टच! तोल स्थिर ठेवा.", englishText: "Touch! Hold point on target for 1 second.", status: "🎯 अचूक पॉईंट! डमीवर स्पर्श १ सेकंद स्थिर ठेवा!", color: "#22c55e" },
+                { startTime: 21500, subPhase: 3, marathiText: "सुरक्षित मागे या.", englishText: "Recover smoothly back to En Garde.", status: "३. सुरक्षित एन गार्डेवर रिकव्हर व्हा.", color: "#38bdf8" }
+            ]
+        },
+        {
+            drillId: 5,
+            title: "🚀 ६. रॉकेट लंज – क्षितिजसमांतर वेग",
+            phases: [
+                { startTime: 0, subPhase: 0, marathiText: "लंजसाठी तयार राहा.", englishText: "Prepare for explosive horizontal lunge.", status: "१. लक्ष्य छातीवर रोखा - लंजसाठी स्प्रिंग तयार ठेवा!", color: "#38bdf8" },
+                { startTime: 6500, subPhase: 1, marathiText: "हात आधी, मागचा पाय स्थिर, रॉकेट लंज!", englishText: "Arm first, rear foot anchored, rocket lunge drive!", status: "२. हात आधी ➔ मागच्या पायाने क्षितिजसमांतर धक्का ➔ ९०° अचूक लंज!", color: "#4ade80" },
+                { startTime: 17500, subPhase: 2, marathiText: "शाब्बास! लंज स्थिर ठेवा.", englishText: "Excellent lunge landing! Hold your 90-degree balance.", status: "🎯 शाब्बास रीवा! अचूक लंजचा तोल १ सेकंद स्थिर ठेवा!", color: "#22c55e" },
+                { startTime: 21500, subPhase: 3, marathiText: "पुढच्या टाचेने ढकलून मागे या.", englishText: "Push off the front heel and recover upright.", status: "३. पुढच्या टाचेने जमिनीला मागे ढकला आणि ताठ रिकव्हर व्हा!", color: "#38bdf8" }
+            ]
+        },
+        {
+            drillId: 6,
+            title: "⚡ ७. पॅरी ४ आणि रिपोस्ट",
+            phases: [
+                { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण पाहा, अंतर राखा.", englishText: "Read opponent's attack; prepare defensive retreat.", status: "१. प्रतिस्पर्ध्याचे आक्रमण ओळखा, अंतर राखण्यासाठी सज्ज राहा.", color: "#38bdf8" },
+                { startTime: 6000, subPhase: 1, marathiText: "मागे पाऊल, कोपर स्थिर, पॅरी चार!", englishText: "Retreat step, tuck elbow, Parry 4 inside line!", status: "२. मागे पाऊल (चवडा आधी), कोपर बरगडीजवळ स्थिर ठेवून डावीकडे पॅरी ४!", color: "#facc15" },
+                { startTime: 15000, subPhase: 2, marathiText: "हात मागे न घेता, थेट आतल्या छातीवर रिपोस्ट!", englishText: "Direct riposte to inner chest without retracting arm!", status: "३. हात मागे न घेता तिथूनच आतल्या छातीवर थेट रिपोस्ट!", color: "#22c55e" },
+                { startTime: 23000, subPhase: 3, marathiText: "शाब्बास रीवा, उत्कृष्ट पॅरी चार व रिपोस्ट!", englishText: "Splendid execution of Parry 4 and riposte!", status: "४. अचूक पॅरी चार व रिपोस्ट पूर्ण! शाब्बास रीवा!", color: "#38bdf8" }
+            ]
+        },
+        {
+            drillId: 7,
+            title: "🛡️ ८. पॅरी ६ आणि रिपोस्ट",
+            phases: [
+                { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण ओळखा.", englishText: "Recognize incoming high-line thrust.", status: "१. प्रतिस्पर्ध्याच्या आक्रमणाची दिशा ओळखा.", color: "#38bdf8" },
+                { startTime: 6000, subPhase: 1, marathiText: "अंगठा वर, उजवीकडे पॅरी सहा!", englishText: "Thumb up, lateral Parry 6 outside line!", status: "२. मागे पाऊल, अंगठा वर (👍)! उजवीकडे मजबूत बेसने पॅरी ६!", color: "#facc15" },
+                { startTime: 15000, subPhase: 2, marathiText: "बरगड्यांवर थेट रिपोस्ट, टच!", englishText: "Direct riposte to opponent's open flank! Touch!", status: "३. रिपोस्ट: प्रतिस्पर्ध्याच्या उघड्या बरगड्यांवर (Flank) अचूक स्पर्श!", color: "#22c55e" },
+                { startTime: 23000, subPhase: 3, marathiText: "शाब्बास रीवा, सुंदर पॅरी सहा!", englishText: "Masterful Parry 6 and riposte finish!", status: "४. पॅरी ६ व रिपोस्ट पूर्ण! शाब्बास रीवा!", color: "#38bdf8" }
+            ]
+        }
+    ];
+
+    // -------------------------------------------------------------
+    // ANATOMICAL RENDERING FUNCTIONS
     // -------------------------------------------------------------
     function solveLegIK(hx, hy, ax, ay, l1, l2, bendForward = true) {
         const dx = ax - hx;
@@ -152,7 +236,6 @@
         const shadeColor = isFront ? '#cbd5e1' : '#94a3b8';
         const seamColor = isFront ? '#94a3b8' : '#64748b';
 
-        // 1. Femur / Thigh with Quadriceps Muscle Form
         const fAngle = Math.atan2(ky - hy, kx - hx);
         const fPerp = fAngle + Math.PI / 2;
         const qMidX = (hx + kx) * 0.5;
@@ -171,7 +254,6 @@
         ctx.closePath();
         ctx.fill(); ctx.stroke();
 
-        // 2. Tibia / Calf with Gastrocnemius Contour
         const tAngle = Math.atan2(ay - ky, ax - kx);
         const tPerp = tAngle + Math.PI / 2;
         const cMidX = (kx + ax) * 0.5;
@@ -186,7 +268,6 @@
         ctx.closePath();
         ctx.fill(); ctx.stroke();
 
-        // 3. Patella Cap
         ctx.fillStyle = shadeColor;
         ctx.beginPath();
         ctx.arc(kx, ky, 3.2, 0, Math.PI * 2);
@@ -452,7 +533,6 @@
         const femur = 46;
         const tibia = 43;
 
-        // 1. REAR LEG IK
         const rearHipX = pelvisX - 5;
         const rearHipY = pelvisY;
         const rearAnkleY = rearFootY - 6;
@@ -460,7 +540,6 @@
         drawAnatomicalContouredLeg(rearHipX, rearHipY, rearIK.kx, rearIK.ky, rearFootX, rearAnkleY, false);
         drawAuthenticShoe(rearFootX, rearFootY, rearTilt, false, rearFootTurned90, false);
 
-        // 2. FRONT LEG IK
         const frontHipX = pelvisX + 5;
         const frontHipY = pelvisY;
         const frontAnkleY = frontFootY - 6;
@@ -468,7 +547,6 @@
         drawAnatomicalContouredLeg(frontHipX, frontHipY, frontIK.kx, frontIK.ky, frontFootX, frontAnkleY, true);
         drawAuthenticShoe(frontFootX, frontFootY, frontTilt, true, false, false);
 
-        // 3. TORSO & CONDUCTIVE LAMÉ
         const shoulderX = pelvisX + 3 + (torsoIncline * 10);
         const shoulderY = pelvisY - 50;
 
@@ -481,7 +559,6 @@
 
         drawFoilLameVest(pelvisX, pelvisY, shoulderX, shoulderY, false, isError);
 
-        // 4. COUNTERBALANCE REAR ARM
         const bShoulderX = shoulderX - 7;
         const bShoulderY = shoulderY + 8;
         ctx.save();
@@ -507,12 +584,10 @@
         }
         ctx.restore();
 
-        // 5. HEAD & AUTHENTIC MASK
         const headX = shoulderX + 3;
         const headY = shoulderY - 18;
         drawAuthenticMask(headX, headY, gazeTargetX, gazeTargetY, false, isError);
 
-        // 6. WEAPON ARM & FOIL
         const fShoulderX = shoulderX + 7;
         const fShoulderY = shoulderY + 10;
 
@@ -546,16 +621,159 @@
     }
 
     // -------------------------------------------------------------
-    // EXACT DRILL 1 ANIMATION ROUTINE
+    // OPPONENT & DUMMY DRAWING
     // -------------------------------------------------------------
-    const PHASES = [
-        { startTime: 0, marathiText: "दोन्ही पावले जवळ ठेवा आणि सरळ उभे राहा.", englishText: "Stand upright with both feet together.", status: "१. दोन्ही पावले जवळ जोडून ताठ उभे राहा. (लाल त्रुटीवर टॅप करा)", color: "#ef4444" },
-        { startTime: 9000, marathiText: "मागचा पाय नव्वद अंशात फिरवून एल आकार बनवा.", englishText: "Turn the rear foot 90 degrees to form an L.", status: "२. पुढचा पाय सरळ ठेवून, मागचा पाय ९० अंशात फिरवा ('L' आकार)!", color: "#facc15" },
-        { startTime: 18000, marathiText: "शाब्बास रीवा, अचूक एल पोझिशन तयार झाली आहे!", englishText: "Excellent Riva, perfect L-stance base achieved!", status: "✅ अचूक 'L' कोन आणि खांद्याइतके नैसर्गिक अंतर पूर्ण!", color: "#22c55e" }
-    ];
+    function drawTrainingDummy(x, groundY, targetY, label) {
+        ctx.save();
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x + 2, groundY - 8, 48, 8, [4, 4, 1, 1]);
+        ctx.fill(); ctx.stroke();
 
-    let currentPhaseIdx = -1;
+        ctx.fillStyle = '#334155';
+        ctx.fillRect(x + 22, targetY - 45, 8, groundY - (targetY - 45));
 
+        ctx.fillStyle = '#1e293b';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(x - 2, targetY - 40, 24, 76, [8, 8, 8, 8]);
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(x + 1, targetY, 15, -Math.PI / 2, Math.PI / 2); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(x + 1, targetY, 9, -Math.PI / 2, Math.PI / 2); ctx.fill();
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(x + 1, targetY, 4, -Math.PI / 2, Math.PI / 2); ctx.fill();
+
+        if (label) {
+            ctx.fillStyle = '#facc15';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(label, x - 25, targetY + 52);
+        }
+        ctx.restore();
+    }
+
+    function drawSternumTarget(x, y, label) {
+        ctx.save();
+        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ef4444'; ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fill();
+        if (label) {
+            ctx.fillStyle = '#facc15'; ctx.font = 'bold 12px sans-serif';
+            ctx.fillText(label, x - 55, y + 30);
+        }
+        ctx.restore();
+    }
+
+    function drawOpponentFencer(baseRearX, groundY, attackP, parryEngagement, riposteProgress, isParry6, rivaGuardX, rivaGuardY) {
+        const femur = 46, tibia = 43;
+        const baseStance = 48;
+        const advanceDist = 38;
+        const maxLungeSplit = 62;
+
+        let rearFootX, frontFootX, pelvisX, pelvisY;
+        let frontTilt = 0, rearTilt = 0, frontFootY = groundY;
+
+        if (attackP < 0.35) {
+            const advP = attackP / 0.35;
+            if (advP < 0.5) {
+                const subP = advP / 0.5;
+                rearFootX = baseRearX;
+                frontFootX = (baseRearX - baseStance) - (subP * advanceDist);
+                frontTilt = 18 * Math.sin(subP * Math.PI);
+                frontFootY = groundY - (4.0 * Math.sin(subP * Math.PI));
+                pelvisX = (baseRearX - 24) - (subP * advanceDist * 0.5);
+            } else {
+                const subP = (advP - 0.5) / 0.5;
+                frontFootX = (baseRearX - baseStance) - advanceDist;
+                rearFootX = baseRearX - (subP * advanceDist);
+                rearTilt = -12 * Math.sin(subP * Math.PI);
+                pelvisX = (baseRearX - 24) - (advanceDist * 0.5) - (subP * advanceDist * 0.5);
+            }
+            pelvisY = groundY - 60;
+        } else {
+            const lungeSubP = (attackP - 0.35) / 0.65;
+            rearFootX = baseRearX - advanceDist;
+            frontFootX = (rearFootX - baseStance) - (lungeSubP * maxLungeSplit);
+
+            pelvisX = (rearFootX - 24) - (lungeSubP * 38);
+            const pelvisDrop = Math.pow(lungeSubP, 2.5) * 16;
+            pelvisY = groundY - 60 + pelvisDrop;
+
+            if (lungeSubP > 0.15 && lungeSubP < 0.85) {
+                frontTilt = 20 * Math.sin(((lungeSubP - 0.15) / 0.7) * Math.PI);
+                frontFootY = groundY - (4.5 * Math.sin(((lungeSubP - 0.15) / 0.7) * Math.PI));
+            }
+        }
+
+        const shoulderX = pelvisX - 3;
+        const shoulderY = pelvisY - 50;
+
+        const frontIK = solveLegIK(pelvisX - 5, pelvisY, frontFootX, frontFootY - 6, femur, tibia, false);
+        const rearIK = solveLegIK(pelvisX + 5, pelvisY, rearFootX, groundY - 6, femur, tibia, true);
+
+        drawAnatomicalContouredLeg(pelvisX + 5, pelvisY, rearIK.kx, rearIK.ky, rearFootX, groundY - 6, false);
+        drawAnatomicalContouredLeg(pelvisX - 5, pelvisY, frontIK.kx, frontIK.ky, frontFootX, frontFootY - 6, true);
+
+        drawAuthenticShoe(rearFootX, groundY, rearTilt, false, true, false);
+        drawAuthenticShoe(frontFootX, frontFootY, frontTilt, true, false, true);
+
+        drawFoilLameVest(pelvisX, pelvisY, shoulderX, shoulderY, true, false);
+        drawAuthenticMask(shoulderX - 3, shoulderY - 18, 0, 0, true, false);
+
+        const sX = shoulderX - 7;
+        const sY = shoulderY + 10;
+
+        let reach = 24 + (attackP * 36);
+        let handX = sX - reach;
+        let handY = sY;
+
+        if (riposteProgress > 0) {
+            const yieldAmt = Math.min(1, riposteProgress * 1.4);
+            handX = sX - reach + (yieldAmt * 30);
+            handY = sY + (isParry6 ? -18 : 16) * yieldAmt;
+        }
+
+        ctx.save();
+        ctx.strokeStyle = '#64748b'; ctx.lineWidth = 3.8; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(sX, sY); ctx.lineTo(handX, handY); ctx.stroke();
+        ctx.restore();
+
+        const bladeLen = 104;
+        let deflAngleDeg = 0;
+        if (parryEngagement > 0.35 && riposteProgress === 0) {
+            deflAngleDeg = isParry6 ? 17 : -17;
+        } else if (riposteProgress > 0) {
+            deflAngleDeg = isParry6 ? 26 : -26;
+        }
+
+        const rad = (deflAngleDeg * Math.PI) / 180;
+        const tipX = handX - Math.cos(rad) * bladeLen;
+        const tipY = handY + Math.sin(rad) * bladeLen;
+
+        ctx.save();
+        ctx.translate(handX, handY);
+        ctx.rotate(rad + Math.PI);
+        ctx.fillStyle = '#94a3b8';
+        ctx.strokeStyle = '#334155';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 3.8, 10, 0, -Math.PI / 2, Math.PI / 2, true);
+        ctx.fill(); ctx.stroke();
+        ctx.restore();
+
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(handX - 3, handY); ctx.lineTo(tipX, tipY); ctx.stroke();
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(tipX, tipY, 2.6, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // -------------------------------------------------------------
+    // 8 SUB-DRILL RENDER FUNCTIONS
+    // -------------------------------------------------------------
     function renderDrill1_LStance(t) {
         drawFencingStrip(GROUND_Y);
         const fencerX = 410;
@@ -585,29 +803,559 @@
         });
     }
 
+    function renderDrill2_EnGarde(t) {
+        drawFencingStrip(GROUND_Y);
+        const fencerX = 410;
+        const phase = t < 10000 ? 0 : 1;
+        const pelvisDrop = phase === 0 ? 0 : 12;
+
+        clearErrorZones();
+
+        if (phase === 0) {
+            registerErrorZone('d2_knee', fencerX, 260, 28, () => {
+                effectiveElapsed = 10005;
+            });
+        }
+
+        drawU10Fencer({
+            pelvisX: fencerX, pelvisY: 242 + pelvisDrop,
+            frontFootX: fencerX + 24, frontFootY: GROUND_Y,
+            rearFootX: fencerX - 24, rearFootY: GROUND_Y,
+            rearFootTurned90: true,
+            isError: phase === 0
+        });
+    }
+
+    function renderDrill3_StepSequence(t) {
+        drawFencingStrip(GROUND_Y);
+        clearErrorZones();
+
+        const baseStance = 48;
+        const stepDist = 38;
+        const centerX = 400;
+        const startFrontX = centerX + baseStance / 2;
+        const startBackX = centerX - baseStance / 2;
+
+        let frontX = startFrontX, backX = startBackX;
+        let frontTilt = 0, rearTilt = 0, frontY = GROUND_Y, backY = GROUND_Y;
+        let pelvisOffset = 0, pelvicMicroRise = 0;
+
+        if (t < 11000) {
+            const p = Math.min(1, Math.max(0, (t - 1500) / 7500));
+            if (p < 0.5) {
+                const subP = p / 0.5;
+                backX = startBackX;
+                frontX = startFrontX + (subP * stepDist);
+                if (subP < 0.8) {
+                    frontTilt = -18;
+                    frontY = GROUND_Y - (4.5 * Math.sin((subP / 0.8) * Math.PI));
+                } else {
+                    const landP = (subP - 0.8) / 0.2;
+                    frontTilt = -18 * (1 - landP);
+                    frontY = GROUND_Y;
+                }
+                pelvisOffset = subP * (stepDist * 0.5);
+                pelvicMicroRise = -2.2 * Math.sin(subP * Math.PI);
+            } else {
+                const subP = (p - 0.5) / 0.5;
+                frontX = startFrontX + stepDist;
+                backX = startBackX + (subP * stepDist);
+                rearTilt = 12 * Math.sin(subP * Math.PI);
+                backY = GROUND_Y - (3.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = (stepDist * 0.5) + (subP * stepDist * 0.5);
+                pelvicMicroRise = -1.8 * Math.sin(subP * Math.PI);
+            }
+        } else if (t < 22000) {
+            const p = Math.min(1, Math.max(0, (t - 12500) / 7500));
+            const advancedFrontX = startFrontX + stepDist;
+            const advancedBackX = startBackX + stepDist;
+
+            if (p < 0.5) {
+                const subP = p / 0.5;
+                frontX = advancedFrontX;
+                backX = advancedBackX - (subP * stepDist);
+                rearTilt = 18 * Math.sin(subP * Math.PI);
+                backY = GROUND_Y - (4.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = stepDist - (subP * (stepDist * 0.5));
+                pelvicMicroRise = -2.2 * Math.sin(subP * Math.PI);
+            } else {
+                const subP = (p - 0.5) / 0.5;
+                backX = startBackX;
+                frontX = advancedFrontX - (subP * stepDist);
+                frontTilt = -14 * Math.sin(subP * Math.PI);
+                frontY = GROUND_Y - (3.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = (stepDist * 0.5) - (subP * stepDist * 0.5);
+                pelvicMicroRise = -1.8 * Math.sin(subP * Math.PI);
+            }
+        }
+
+        drawU10Fencer({
+            pelvisX: centerX + pelvisOffset, pelvisY: 254 + pelvicMicroRise,
+            frontFootX: frontX, frontFootY: frontY, frontTilt: frontTilt,
+            rearFootX: backX, rearFootY: backY, rearTilt: rearTilt,
+            rearFootTurned90: true
+        });
+    }
+
+    function renderDrill4_LaserTip(t) {
+        drawFencingStrip(GROUND_Y);
+        clearErrorZones();
+
+        const targetX = 660, targetY = 214;
+        drawSternumTarget(targetX, targetY, "छाती (Sternum)");
+
+        const baseStance = 48;
+        const startX = 260;
+        const stepDist = 34;
+
+        let frontX = startX + baseStance / 2;
+        let backX = startX - baseStance / 2;
+        let frontTilt = 0, rearTilt = 0, frontY = GROUND_Y, backY = GROUND_Y;
+        let pelvisOffset = 0;
+        let tipAngle = -3;
+        let isError = false;
+
+        if (t < 8000) {
+            tipAngle = -36;
+            isError = true;
+            registerErrorZone('d4_wrist', startX + 32, 218, 25, () => {
+                effectiveElapsed = 8005;
+            });
+        } else if (t < 18000) {
+            const p = (t - 8000) / 10000;
+            if (p < 0.5) {
+                const subP = p / 0.5;
+                backX = startX - baseStance / 2;
+                frontX = (startX + baseStance / 2) + (subP * stepDist);
+                frontTilt = -18 * Math.sin(subP * Math.PI);
+                frontY = GROUND_Y - (4.0 * Math.sin(subP * Math.PI));
+                pelvisOffset = subP * (stepDist * 0.5);
+            } else {
+                const subP = (p - 0.5) / 0.5;
+                frontX = (startX + baseStance / 2) + stepDist;
+                backX = (startX - baseStance / 2) + (subP * stepDist);
+                rearTilt = 12 * Math.sin(subP * Math.PI);
+                backY = GROUND_Y - (3.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = (stepDist * 0.5) + (subP * stepDist * 0.5);
+            }
+        } else {
+            const p = (t - 18000) / 12000;
+            const advFrontX = startX + baseStance / 2 + stepDist;
+            const advBackX = startX - baseStance / 2 + stepDist;
+            if (p < 0.5) {
+                const subP = p / 0.5;
+                frontX = advFrontX;
+                backX = advBackX - (subP * stepDist);
+                rearTilt = 16 * Math.sin(subP * Math.PI);
+                backY = GROUND_Y - (4.0 * Math.sin(subP * Math.PI));
+                pelvisOffset = stepDist - (subP * (stepDist * 0.5));
+            } else {
+                const subP = (p - 0.5) / 0.5;
+                backX = startX - baseStance / 2;
+                frontX = advFrontX - (subP * stepDist);
+                frontTilt = -14 * Math.sin(subP * Math.PI);
+                frontY = GROUND_Y - (3.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = (stepDist * 0.5) - (subP * stepDist * 0.5);
+            }
+        }
+
+        const currentMidX = startX + pelvisOffset;
+
+        if (!isError) {
+            const handX = currentMidX + 34;
+            const handY = 216;
+            const rad = (tipAngle * Math.PI) / 180;
+            const tipX = handX + Math.cos(rad) * 104;
+            const tipY = handY + Math.sin(rad) * 104;
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+            ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(targetX, targetY); ctx.stroke();
+            ctx.restore();
+        }
+
+        drawU10Fencer({
+            pelvisX: currentMidX, pelvisY: 254,
+            frontFootX: frontX, frontFootY: frontY, frontTilt: frontTilt,
+            rearFootX: backX, rearFootY: backY, rearTilt: rearTilt,
+            rearFootTurned90: true,
+            bladeAngle: tipAngle,
+            isError: isError,
+            gazeTargetX: targetX,
+            gazeTargetY: targetY
+        });
+    }
+
+    function renderDrill5_BasicAttack(t) {
+        drawFencingStrip(GROUND_Y);
+        clearErrorZones();
+
+        const baseStance = 48;
+        const startX = 240;
+        const stepDist = 64;
+        const targetX = startX + stepDist + 10 + 24 + 16 + 104 - 4;
+        const targetY = 226;
+
+        drawTrainingDummy(targetX, GROUND_Y, targetY, "प्रॅक्टिस डमी पोस्ट");
+
+        let armExt = 0;
+        let frontX = startX + baseStance / 2;
+        let backX = startX - baseStance / 2;
+        let frontTilt = 0, rearTilt = 0, frontY = GROUND_Y, backY = GROUND_Y;
+        let pelvisOffset = 0;
+
+        if (t < 6000) {
+            armExt = 0;
+        } else if (t < 17500) {
+            const p = (t - 6000) / 11500;
+            const stepP = Math.max(0, (p - 0.20) / 0.80);
+            armExt = p < 0.22 ? (p / 0.22) * 0.38 : (0.38 + stepP * 0.62);
+
+            if (stepP < 0.5) {
+                const subP = stepP / 0.5;
+                backX = startX - baseStance / 2;
+                frontX = (startX + baseStance / 2) + (subP * stepDist);
+                frontTilt = -20 * Math.sin(subP * Math.PI);
+                frontY = GROUND_Y - (4.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = subP * (stepDist * 0.5);
+            } else {
+                const subP = (stepP - 0.5) / 0.5;
+                frontX = (startX + baseStance / 2) + stepDist;
+                backX = (startX - baseStance / 2) + (subP * stepDist);
+                rearTilt = 12 * Math.sin(subP * Math.PI);
+                backY = GROUND_Y - (3.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = (stepDist * 0.5) + (subP * stepDist * 0.5);
+            }
+        } else if (t < 21500) {
+            armExt = 1;
+            frontX = startX + baseStance / 2 + stepDist;
+            backX = startX - baseStance / 2 + stepDist;
+            pelvisOffset = stepDist;
+        } else {
+            const recP = (t - 21500) / 8500;
+            armExt = recP < 0.25 ? 1.0 : (1.0 - ((recP - 0.25) / 0.75));
+            const reachedFrontX = startX + baseStance / 2 + stepDist;
+            const reachedBackX = startX - baseStance / 2 + stepDist;
+
+            if (recP < 0.5) {
+                const subP = recP / 0.5;
+                frontX = reachedFrontX;
+                backX = reachedBackX - (subP * stepDist);
+                rearTilt = 16 * Math.sin(subP * Math.PI);
+                backY = GROUND_Y - (4.0 * Math.sin(subP * Math.PI));
+                pelvisOffset = stepDist - (subP * (stepDist * 0.5));
+            } else {
+                const subP = (recP - 0.5) / 0.5;
+                backX = startX - baseStance / 2;
+                frontX = reachedFrontX - (subP * stepDist);
+                frontTilt = -14 * Math.sin(subP * Math.PI);
+                frontY = GROUND_Y - (3.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = (stepDist * 0.5) - (subP * stepDist * 0.5);
+            }
+        }
+
+        drawU10Fencer({
+            pelvisX: startX + pelvisOffset, pelvisY: 254,
+            frontFootX: frontX, frontFootY: frontY, frontTilt: frontTilt,
+            rearFootX: backX, rearFootY: backY, rearTilt: rearTilt,
+            rearFootTurned90: true,
+            armState: 'attack', armExtension: armExt,
+            bladeAngle: -2.0,
+            targetSurfaceX: targetX, targetSurfaceY: targetY,
+            gazeTargetX: targetX, gazeTargetY: targetY
+        });
+    }
+
+    function renderDrill6_Lunge(t) {
+        drawFencingStrip(GROUND_Y);
+        clearErrorZones();
+
+        const rearAnchorX = 250;
+        const baseStance = 48;
+        const maxLungeReach = 62;
+        const targetX = rearAnchorX + 24 + 40 + 10 + 24 + 16 + 104 - 4;
+        const targetY = 226;
+
+        drawTrainingDummy(targetX, GROUND_Y, targetY, "प्रॅक्टिस डमी पोस्ट");
+
+        let lungeP = 0;
+        let rearArmTension = 0;
+
+        if (t < 6500) {
+            lungeP = 0;
+            rearArmTension = 0;
+        } else if (t < 17500) {
+            const p = (t - 6500) / 11000;
+            lungeP = Math.min(1, Math.pow(p, 1.35) * 1.45);
+            rearArmTension = lungeP;
+        } else if (t < 21500) {
+            lungeP = 1;
+            rearArmTension = 0.88;
+        } else {
+            const recP = (t - 21500) / 8500;
+            lungeP = 1 - recP;
+            rearArmTension = (1 - recP) * 0.88;
+        }
+
+        const pelvisDrop = Math.pow(lungeP, 2.5) * 16;
+        const pelvisY = 252 + pelvisDrop;
+        const pelvisX = rearAnchorX + 24 + (lungeP * 40);
+
+        const frontFootX = rearAnchorX + baseStance + (lungeP * maxLungeReach);
+        let frontTilt = 0, frontFootY = GROUND_Y;
+        if (lungeP > 0.15 && lungeP < 0.85) {
+            frontTilt = -24;
+            frontFootY = GROUND_Y - (5.0 * Math.sin((lungeP - 0.15) / 0.7 * Math.PI));
+        }
+
+        drawU10Fencer({
+            pelvisX, pelvisY,
+            frontFootX, frontFootY,
+            frontTilt: frontTilt,
+            rearFootX: rearAnchorX, rearFootY: GROUND_Y,
+            rearFootTurned90: true,
+            torsoIncline: lungeP * 0.08,
+            armState: 'lunge', armExtension: Math.min(1, lungeP * 1.35),
+            bladeAngle: -2.5,
+            rearArmActiveLunge: rearArmTension,
+            targetSurfaceX: targetX, targetSurfaceY: targetY,
+            gazeTargetX: targetX, gazeTargetY: targetY
+        });
+
+        if (lungeP > 0.85) {
+            ctx.save();
+            ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 1.8; ctx.setLineDash([3, 3]);
+            ctx.beginPath(); ctx.moveTo(frontFootX, 260); ctx.lineTo(frontFootX, GROUND_Y); ctx.stroke();
+            ctx.fillStyle = '#22c55e'; ctx.font = 'bold 12px sans-serif';
+            ctx.fillText("९०° अचूक कोन", frontFootX - 24, 256);
+            ctx.restore();
+        }
+    }
+
+    function renderDrill7_Parry4(t) {
+        drawFencingStrip(GROUND_Y);
+        clearErrorZones();
+
+        const baseStance = 48;
+        const retreatDist = 28;
+        const startX = 230;
+
+        let frontX = startX + baseStance / 2;
+        let backX = startX - baseStance / 2;
+        let frontTilt = 0, rearTilt = 0, frontY = GROUND_Y, backY = GROUND_Y;
+        let pelvisOffset = 0;
+        let oppAttackP = 0, rivaParryP = 0, riposteP = 0;
+
+        if (t < 6000) {
+            // En garde evaluation
+        } else if (t < 15000) {
+            const p = (t - 6000) / 9000;
+            oppAttackP = p;
+            rivaParryP = p;
+
+            if (p < 0.5) {
+                const subP = p / 0.5;
+                frontX = startX + baseStance / 2;
+                backX = (startX - baseStance / 2) - (subP * retreatDist);
+                rearTilt = 18 * Math.sin(subP * Math.PI);
+                backY = GROUND_Y - (4.0 * Math.sin(subP * Math.PI));
+                pelvisOffset = -(subP * (retreatDist * 0.5));
+            } else {
+                const subP = (p - 0.5) / 0.5;
+                backX = (startX - baseStance / 2) - retreatDist;
+                frontX = (startX + baseStance / 2) - (subP * retreatDist);
+                frontTilt = -14 * Math.sin(subP * Math.PI);
+                frontY = GROUND_Y - (3.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = -(retreatDist * 0.5) - (subP * retreatDist * 0.5);
+            }
+        } else if (t < 23000) {
+            oppAttackP = 1;
+            const reachedBackX = startX - baseStance / 2 - retreatDist;
+            const reachedFrontX = startX + baseStance / 2 - retreatDist;
+            const p = (t - 15000) / 8000;
+            riposteP = p;
+
+            backX = reachedBackX;
+            frontX = reachedFrontX + (Math.min(1, p * 1.5) * 24);
+            pelvisOffset = -retreatDist + (Math.min(1, p * 1.5) * 12);
+        } else {
+            const p = (t - 23000) / 7000;
+            pelvisOffset = -retreatDist + (p * retreatDist);
+            frontX = startX + baseStance / 2 + pelvisOffset;
+            backX = startX - baseStance / 2 + pelvisOffset;
+            oppAttackP = 1 - p; riposteP = 1 - p;
+        }
+
+        const currentRivaX = startX + pelvisOffset;
+        const rivaGuardX = currentRivaX + 10 + 24;
+        const rivaGuardY = 224;
+
+        const oppBaseRearX = 490;
+        const oppAdvanceDist = 38;
+        let oppEffectiveRearX, oppPelvisX;
+
+        if (oppAttackP < 0.35) {
+            const advP = oppAttackP / 0.35;
+            oppEffectiveRearX = oppBaseRearX - (advP * oppAdvanceDist);
+            oppPelvisX = oppEffectiveRearX - 24;
+        } else {
+            const lungeSubP = (oppAttackP - 0.35) / 0.65;
+            oppEffectiveRearX = oppBaseRearX - oppAdvanceDist;
+            oppPelvisX = (oppEffectiveRearX - 24) - (lungeSubP * 38);
+        }
+
+        const oppChestX = oppPelvisX - 18;
+        const oppChestY = 226;
+
+        drawOpponentFencer(oppBaseRearX, GROUND_Y, oppAttackP, rivaParryP, riposteP, false, rivaGuardX, rivaGuardY);
+
+        const lateralAngle = riposteP > 0 ? -1.0 : (-2.0 - (rivaParryP * 2.0));
+        const physicalTargetX = riposteP > 0.68 ? oppChestX : 0;
+
+        drawU10Fencer({
+            pelvisX: currentRivaX, pelvisY: 254,
+            frontFootX: frontX, frontFootY: frontY, frontTilt: frontTilt,
+            rearFootX: backX, rearFootY: backY, rearTilt: rearTilt,
+            rearFootTurned90: true,
+            armState: riposteP > 0 ? 'attack' : 'enGarde',
+            armExtension: riposteP,
+            bladeAngle: lateralAngle,
+            targetSurfaceX: physicalTargetX,
+            targetSurfaceY: oppChestY,
+            isFlankHit: false,
+            gazeTargetX: oppChestX,
+            gazeTargetY: oppChestY
+        });
+    }
+
+    function renderDrill8_Parry6(t) {
+        drawFencingStrip(GROUND_Y);
+        clearErrorZones();
+
+        const baseStance = 48;
+        const retreatDist = 28;
+        const startX = 230;
+
+        let frontX = startX + baseStance / 2;
+        let backX = startX - baseStance / 2;
+        let frontTilt = 0, rearTilt = 0, frontY = GROUND_Y, backY = GROUND_Y;
+        let pelvisOffset = 0;
+        let oppAttackP = 0, rivaParryP = 0, riposteP = 0;
+
+        if (t < 6000) {
+            // En garde
+        } else if (t < 15000) {
+            const p = (t - 6000) / 9000;
+            oppAttackP = p;
+            rivaParryP = p;
+
+            if (p < 0.5) {
+                const subP = p / 0.5;
+                frontX = startX + baseStance / 2;
+                backX = (startX - baseStance / 2) - (subP * retreatDist);
+                rearTilt = 18 * Math.sin(subP * Math.PI);
+                backY = GROUND_Y - (4.0 * Math.sin(subP * Math.PI));
+                pelvisOffset = -(subP * (retreatDist * 0.5));
+            } else {
+                const subP = (p - 0.5) / 0.5;
+                backX = (startX - baseStance / 2) - retreatDist;
+                frontX = (startX + baseStance / 2) - (subP * retreatDist);
+                frontTilt = -14 * Math.sin(subP * Math.PI);
+                frontY = GROUND_Y - (3.5 * Math.sin(subP * Math.PI));
+                pelvisOffset = -(retreatDist * 0.5) - (subP * retreatDist * 0.5);
+            }
+        } else if (t < 23000) {
+            oppAttackP = 1;
+            const reachedBackX = startX - baseStance / 2 - retreatDist;
+            const reachedFrontX = startX + baseStance / 2 - retreatDist;
+            const p = (t - 15000) / 8000;
+            riposteP = p;
+
+            backX = reachedBackX;
+            frontX = reachedFrontX + (Math.min(1, p * 1.5) * 24);
+            pelvisOffset = -retreatDist + (Math.min(1, p * 1.5) * 12);
+        } else {
+            const p = (t - 23000) / 7000;
+            pelvisOffset = -retreatDist + (p * retreatDist);
+            frontX = startX + baseStance / 2 + pelvisOffset;
+            backX = startX - baseStance / 2 + pelvisOffset;
+            oppAttackP = 1 - p; riposteP = 1 - p;
+        }
+
+        const currentRivaX = startX + pelvisOffset;
+        const rivaGuardX = currentRivaX + 10 + 24;
+        const rivaGuardY = 224;
+
+        const oppBaseRearX = 490;
+        const oppAdvanceDist = 38;
+        let oppEffectiveRearX, oppPelvisX;
+
+        if (oppAttackP < 0.35) {
+            const advP = oppAttackP / 0.35;
+            oppEffectiveRearX = oppBaseRearX - (advP * oppAdvanceDist);
+            oppPelvisX = oppEffectiveRearX - 24;
+        } else {
+            const lungeSubP = (oppAttackP - 0.35) / 0.65;
+            oppEffectiveRearX = oppBaseRearX - oppAdvanceDist;
+            oppPelvisX = (oppEffectiveRearX - 24) - (lungeSubP * 38);
+        }
+
+        const oppFlankX = oppPelvisX - 18;
+        const oppFlankY = 232;
+
+        drawOpponentFencer(oppBaseRearX, GROUND_Y, oppAttackP, rivaParryP, riposteP, true, rivaGuardX, rivaGuardY);
+
+        const lateralAngle = riposteP > 0 ? 2.5 : (-2.0 + (rivaParryP * 4.0));
+        const physicalTargetX = riposteP > 0.68 ? oppFlankX : 0;
+
+        drawU10Fencer({
+            pelvisX: currentRivaX, pelvisY: 254,
+            frontFootX: frontX, frontFootY: frontY, frontTilt: frontTilt,
+            rearFootX: backX, rearFootY: backY, rearTilt: rearTilt,
+            rearFootTurned90: true,
+            armState: riposteP > 0 ? 'attack' : 'enGarde',
+            armExtension: riposteP,
+            bladeAngle: lateralAngle,
+            targetSurfaceX: physicalTargetX,
+            targetSurfaceY: oppFlankY,
+            isFlankHit: true,
+            gazeTargetX: oppFlankX,
+            gazeTargetY: oppFlankY
+        });
+    }
+
+    // -------------------------------------------------------------
+    // SUB-DRILL CONTROLS & STATE UPDATES
+    // -------------------------------------------------------------
     function updateStateMachine(t) {
-        let targetIdx = 0;
-        for (let i = PHASES.length - 1; i >= 0; i--) {
-            if (t >= PHASES[i].startTime) {
-                targetIdx = i;
+        const config = drillTimelineConfigs[currentDrill];
+        if (!config) return;
+
+        let targetPhase = config.phases[0];
+        for (let i = config.phases.length - 1; i >= 0; i--) {
+            if (t >= config.phases[i].startTime) {
+                targetPhase = config.phases[i];
                 break;
             }
         }
 
-        if (currentPhaseIdx !== targetIdx) {
-            currentPhaseIdx = targetIdx;
-            const p = PHASES[targetIdx];
+        if (currentSubPhase !== targetPhase.subPhase) {
+            currentSubPhase = targetPhase.subPhase;
+
+            const badge = document.getElementById('drillNumberBadge');
+            if (badge) badge.innerText = `Drill #1 (${currentDrill + 1}/8)`;
+
             const statusBox = document.getElementById('status-box');
             if (statusBox) {
-                statusBox.innerText = typeof getPersonalizedText === 'function' ? getPersonalizedText(p.status) : p.status;
-                statusBox.style.color = p.color;
+                statusBox.innerText = typeof getPersonalizedText === 'function' ? getPersonalizedText(targetPhase.status) : targetPhase.status;
+                statusBox.style.color = targetPhase.color;
             }
+
             if (typeof speakCoachingCue === 'function') {
-                speakCoachingCue(p.marathiText, p.englishText);
+                speakCoachingCue(targetPhase.marathiText, targetPhase.englishText);
             }
         }
 
-        // Timer HUD in Master Shell
         const remainingSec = Math.max(0, Math.ceil((DRILL_DURATION - t) / 1000));
         const timerNum = document.getElementById('timer-number');
         if (timerNum) timerNum.innerText = `${remainingSec}s`;
@@ -619,6 +1367,31 @@
         }
     }
 
+    function switchSubDrill(idx) {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        currentDrill = (idx + 8) % 8;
+        effectiveElapsed = 0;
+        currentSubPhase = -1;
+        lastFrameTime = performance.now();
+        updateStateMachine(0);
+    }
+
+    function nextSubDrill() {
+        switchSubDrill(currentDrill + 1);
+    }
+
+    function prevSubDrill() {
+        switchSubDrill(currentDrill - 1);
+    }
+
+    // Wire dock buttons directly to sub-drill stepping
+    function bindDockButtons() {
+        const btnNext = document.getElementById('btnNext');
+        const btnPrev = document.getElementById('btnPrev');
+        if (btnNext) btnNext.onclick = nextSubDrill;
+        if (btnPrev) btnPrev.onclick = prevSubDrill;
+    }
+
     function loop() {
         if (isPaused) return;
 
@@ -627,14 +1400,27 @@
         lastFrameTime = now;
 
         if (now >= hitStopUntil) {
-            effectiveElapsed = (effectiveElapsed + dt) % DRILL_DURATION;
-            updateStateMachine(effectiveElapsed);
+            effectiveElapsed += dt;
+
+            // Auto-advance to next sub-drill after 30s
+            if (effectiveElapsed >= DRILL_DURATION) {
+                nextSubDrill();
+            } else {
+                updateStateMachine(effectiveElapsed);
+            }
         }
 
         ctx.clearRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
         applyCameraTransform();
 
-        renderDrill1_LStance(effectiveElapsed);
+        if (currentDrill === 0) renderDrill1_LStance(effectiveElapsed);
+        else if (currentDrill === 1) renderDrill2_EnGarde(effectiveElapsed);
+        else if (currentDrill === 2) renderDrill3_StepSequence(effectiveElapsed);
+        else if (currentDrill === 3) renderDrill4_LaserTip(effectiveElapsed);
+        else if (currentDrill === 4) renderDrill5_BasicAttack(effectiveElapsed);
+        else if (currentDrill === 5) renderDrill6_Lunge(effectiveElapsed);
+        else if (currentDrill === 6) renderDrill7_Parry4(effectiveElapsed);
+        else if (currentDrill === 7) renderDrill8_Parry6(effectiveElapsed);
 
         drawActiveErrorReticles();
         updateAndDrawRipples();
@@ -644,22 +1430,25 @@
     }
 
     // -------------------------------------------------------------
-    // CARTRIDGE PUBLIC API
+    // PUBLIC API FOR MASTER SHELL
     // -------------------------------------------------------------
     function init(canvasCtx, w, h, gY) {
         ctx = canvasCtx;
         BASE_WIDTH = w;
         BASE_HEIGHT = h;
         GROUND_Y = gY;
+        bindDockButtons();
         restart();
     }
 
     function restart() {
         if (animFrameId) cancelAnimationFrame(animFrameId);
         effectiveElapsed = 0;
-        currentPhaseIdx = -1;
+        currentSubPhase = -1;
         lastFrameTime = performance.now();
         isPaused = false;
+        bindDockButtons();
+        updateStateMachine(0);
         loop();
     }
 
@@ -682,6 +1471,8 @@
         init: init,
         restart: restart,
         setPaused: setPaused,
-        handleTap: handleTap
+        handleTap: handleTap,
+        next: nextSubDrill,
+        prev: prevSubDrill
     };
 })();
