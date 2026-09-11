@@ -7,17 +7,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-    <!-- Master Shared Responsive Stylesheet -->
     <link rel="stylesheet" href="drill-style.css">
 </head>
 <body>
 
 <div class="drill-viewport">
 
-    <!-- In landscape, wraps header, stage, and coaching into left 90% column -->
-    <div class="main-view-column" style="display: contents;">
+    <!-- Main Stage (Header + Canvas + Coach Pill) -->
+    <div class="main-stage">
         
-        <!-- Header -->
         <header class="top-header">
             <button class="header-back-btn" onclick="location.href='index.html'" aria-label="Back">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -36,13 +34,11 @@
             </div>
         </header>
 
-        <!-- Canvas Animation Stage -->
         <main class="canvas-stage" id="canvas-wrapper">
             <canvas id="fencingCanvas"></canvas>
             <div id="speedBadge" class="speed-overlay-pill"></div>
         </main>
 
-        <!-- Coaching Cue Banner -->
         <section class="coach-panel">
             <div class="coach-pill" id="status-box">दोन्ही पावले जवळ जोडून ताठ उभे राहा</div>
             <div class="hint-subtext">मागे = स्लो-मोशन | पुढे = फास्ट फॉरवर्ड</div>
@@ -50,7 +46,7 @@
         
     </div>
 
-    <!-- Controls Dock (Bottom Console in Portrait / Right Rail in Landscape) -->
+    <!-- Controls Dock (Bottom Bar in Portrait, Right Rail in Landscape) -->
     <nav class="controls-dock">
         <button class="hud-step-btn" id="btnPrev" aria-label="Previous / Slow Motion">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -62,27 +58,27 @@
 
         <div class="media-actions">
             <button class="tool-icon-btn" onclick="restartMasterTraining()" aria-label="Restart">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
                 </svg>
             </button>
 
             <button class="hero-play-btn" id="playToggleBtn" onclick="togglePause()" aria-label="Play / Pause">
-                <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="6 4 20 12 6 20 6 4"></polygon>
                 </svg>
-                <svg id="pauseIcon" style="display: none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <svg id="pauseIcon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="4" width="4" height="16"></rect>
                     <rect x="14" y="4" width="4" height="16"></rect>
                 </svg>
             </button>
 
             <button class="tool-icon-btn" id="audioToggleBtn" onclick="toggleAudio()" aria-label="Toggle Audio">
-                <svg id="audioOnIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="audioOnIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                 </svg>
-                <svg id="audioMuteIcon" style="display: none;" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="audioMuteIcon" style="display: none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <line x1="23" y1="9" x2="17" y2="15"></line>
                     <line x1="17" y1="9" x2="23" y2="15"></line>
@@ -134,11 +130,9 @@ const audioMuteIcon = document.getElementById('audioMuteIcon');
 const btnPrev = document.getElementById('btnPrev');
 const btnNext = document.getElementById('btnNext');
 
-// Coordinate system with increased fencer scale
 const BASE_WIDTH = 820;
 const BASE_HEIGHT = 440;
 const GROUND_Y = 328;
-const SCALE_FACTOR = 1.32; // Increases character size for clear visibility
 
 function setupHiDPI() {
     const dpr = window.devicePixelRatio || 1;
@@ -146,12 +140,9 @@ function setupHiDPI() {
     canvas.height = BASE_HEIGHT * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-
-// Immediate execution on launch
 setupHiDPI();
 window.addEventListener('resize', setupHiDPI);
-window.addEventListener('orientationchange', () => setTimeout(setupHiDPI, 50));
-document.addEventListener('DOMContentLoaded', setupHiDPI);
+window.addEventListener('orientationchange', () => setTimeout(setupHiDPI, 60));
 
 let isMuted = false;
 let audioUnlocked = false;
@@ -280,7 +271,6 @@ canvas.addEventListener('pointerup', (e) => {
 let hitStopUntil = 0;
 let screenShakeRemaining = 0;
 let screenShakeMagnitude = 0;
-let wasInContactPreviousFrame = false;
 
 function triggerHitStop(freezeMs, shakeIntensity) {
     const now = performance.now();
@@ -398,7 +388,6 @@ function updateDrillStateMachine(currentTimeMs) {
     const config = drillTimelineConfigs[drillIdx];
     if (!config) return;
 
-    // Smooth circular countdown
     const remainingSeconds = Math.max(0, Math.ceil((DRILL_DURATION - localTime) / 1000));
     timerNumber.innerText = `${remainingSeconds}s`;
     const progressPercent = (localTime / DRILL_DURATION) * 100;
@@ -422,7 +411,6 @@ function updateDrillStateMachine(currentTimeMs) {
     }
 }
 
-// Hold gesture handlers for Speed & Skipping
 let holdTimer = null;
 let isHolding = false;
 
@@ -725,7 +713,6 @@ function drawU10Fencer(cfg) {
         isError = false
     } = cfg;
 
-    // Enhanced Proportions for U10 clarity
     const femur = 54;
     const tibia = 50;
 
@@ -863,7 +850,7 @@ function render() {
 
     if (currentDrill === 0) renderDrill1_LStance(drillElapsed);
     else if (currentDrill === 1) renderDrill2_EnGarde(drillElapsed);
-    else renderDrill1_LStance(drillElapsed); // Fallback
+    else renderDrill1_LStance(drillElapsed);
 
     drawActiveErrorReticles();
     updateAndDrawRipples();
