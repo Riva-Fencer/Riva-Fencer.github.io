@@ -1,14 +1,15 @@
 {
-  "name": "Riva The Fencer",
-  "short_name": "Riva Fencer",
-  "start_url": "index.html",
+  "name": "Riva Fencer",
+  "short_name": "RivaFencer",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#080c14",
-  "theme_color": "#080c14",
+  "background_color": "#ffffff",
+  "theme_color": "#1e293b",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "icon-512.png",
-      "sizes": "512x512",
+      "src": "/icon-512.png",
+      "sizes": "192x192 512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
