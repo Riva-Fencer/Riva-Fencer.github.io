@@ -1,20 +1,35 @@
 /**
  * Riva Fencer - Cartridge 001
- * Contains all 8 original sub-drills with Next/Prev stepping
+ * Untouched Original Biomechanics, IK Engine, and Animations from Riva Drill 1.html
  */
 (function () {
-    let ctx, BASE_WIDTH = 820, BASE_HEIGHT = 420, GROUND_Y = 312;
-    let animFrameId = null;
-    let isPaused = true;
-    let effectiveElapsed = 0;
-    let lastFrameTime = performance.now();
-    let currentDrill = 0; // 0 to 7 (Sub-drills 1 to 8)
-    let currentSubPhase = -1;
-    let isSlowMo = false;
-    const DRILL_DURATION = 30000;
+    const canvas = document.getElementById('fencingCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusBox = document.getElementById('status-box');
+    const drillTitle = document.getElementById('drill-title');
+
+    const BASE_WIDTH = 820;
+    const BASE_HEIGHT = 420;
+    const GROUND_Y = 312;
+
+    function setupHiDPI() {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = BASE_WIDTH * dpr;
+        canvas.height = BASE_HEIGHT * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    setupHiDPI();
+    window.addEventListener('resize', setupHiDPI);
+
+    let wakeLock = null;
+    async function requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try { wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+        }
+    }
 
     // -------------------------------------------------------------
-    // HIT-TESTING & ERROR RETICLES
+    // WEAKNESS 1: SPATIAL HIT-TESTING & ERROR RETICLE REGISTRY
     // -------------------------------------------------------------
     let activeErrorZones = [];
     let visualRipples = [];
@@ -25,6 +40,18 @@
 
     function clearErrorZones() {
         activeErrorZones = [];
+    }
+
+    function getCanvasPointerPos(evt) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = BASE_WIDTH / rect.width;
+        const scaleY = BASE_HEIGHT / rect.height;
+        const clientX = evt.clientX !== undefined ? evt.clientX : (evt.touches && evt.touches[0] ? evt.touches[0].clientX : 0);
+        const clientY = evt.clientY !== undefined ? evt.clientY : (evt.touches && evt.touches[0] ? evt.touches[0].clientY : 0);
+        return {
+            x: (clientX - rect.left) * scaleX,
+            y: (clientY - rect.top) * scaleY
+        };
     }
 
     function spawnSuccessRipple(x, y) {
@@ -96,7 +123,7 @@
     }
 
     // -------------------------------------------------------------
-    // HIT-STOP & CAMERA SHAKE
+    // WEAKNESS 2: HIT-STOP & DYNAMIC SCREEN SHAKE ENGINE
     // -------------------------------------------------------------
     let hitStopUntil = 0;
     let screenShakeRemaining = 0;
@@ -129,12 +156,77 @@
     }
 
     // -------------------------------------------------------------
-    // TIMELINE CONFIGURATIONS (ALL 8 SUB-DRILLS)
+    // WEAKNESS 4: RESILIENT MULTILINGUAL TTS ENGINE
     // -------------------------------------------------------------
+    let audioUnlocked = false;
+    const speechEngine = { marathiVoice: null, englishVoice: null, mode: 'mr' };
+
+    function initAudio() {
+        audioUnlocked = true;
+        requestWakeLock();
+        auditVoices();
+    }
+
+    function auditVoices() {
+        if (!('speechSynthesis' in window)) return;
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return;
+
+        speechEngine.marathiVoice = voices.find(v => v.lang.toLowerCase().includes('mr')) || null;
+        const hindiVoice = voices.find(v => v.lang.toLowerCase().includes('hi')) || null;
+        speechEngine.englishVoice = voices.find(v => v.lang.toLowerCase().includes('en-in'))
+                                  || voices.find(v => v.lang.toLowerCase().includes('en-gb'))
+                                  || voices.find(v => v.lang.toLowerCase().includes('en-us'))
+                                  || voices[0];
+
+        if (speechEngine.marathiVoice) {
+            speechEngine.mode = 'mr';
+        } else if (hindiVoice) {
+            speechEngine.marathiVoice = hindiVoice;
+            speechEngine.mode = 'hi';
+        } else {
+            speechEngine.mode = 'en';
+        }
+    }
+
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = auditVoices;
+        auditVoices();
+    }
+
+    function getPersonalized(str) {
+        const saved = JSON.parse(localStorage.getItem('riva_athlete')) || { name: 'रीवा' };
+        return str.replaceAll('रीवा', saved.name);
+    }
+
+    function speakCoachingCue(marathiString, englishTranslation) {
+        if (!('speechSynthesis' in window) || !audioUnlocked) return;
+        window.speechSynthesis.cancel();
+
+        let textToSpeak = (speechEngine.mode === 'en') ? englishTranslation : getPersonalized(marathiString);
+        let selectedVoice = (speechEngine.mode === 'en') ? speechEngine.englishVoice : speechEngine.marathiVoice;
+
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.rate = (speechEngine.mode === 'en') ? 0.92 : 0.86;
+        utterance.pitch = 1.05;
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function stopAllSpeech() {
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+
+    // -------------------------------------------------------------
+    // WEAKNESS 3: TIMELINE CONFIGS (ORIGINAL 8 SUB-DRILLS)
+    // -------------------------------------------------------------
+    const DRILL_DURATION = 30000;
+    const TOTAL_MASTER_TIME = DRILL_DURATION * 8;
+
     const drillTimelineConfigs = [
         {
             drillId: 0,
-            title: "📐 १. पायांची अचूक 'L' पोझिशन",
+            title: "📐 १. पायांची अचूक 'L' पोझिशन (० ते ३० सेकंद)",
             phases: [
                 { startTime: 0, subPhase: 0, marathiText: "दोन्ही पावले जवळ ठेवा आणि सरळ उभे राहा.", englishText: "Stand upright with both feet together.", status: "१. दोन्ही पावले जवळ जोडून ताठ उभे राहा. (लाल त्रुटीवर टॅप करा)", color: "#ef4444" },
                 { startTime: 9000, subPhase: 1, marathiText: "मागचा पाय नव्वद अंशात फिरवून एल आकार बनवा.", englishText: "Turn the rear foot 90 degrees to form an L.", status: "२. पुढचा पाय सरळ ठेवून, मागचा पाय ९० अंशात फिरवा ('L' आकार)!", color: "#facc15" },
@@ -143,7 +235,7 @@
         },
         {
             drillId: 1,
-            title: "🦵 २. योग्य एन गार्डे – समतोल गुडघे वाकवणे",
+            title: "🦵 २. योग्य एन गार्डे – समतोल गुडघे वाकवणे (३० ते ६० सेकंद)",
             phases: [
                 { startTime: 0, subPhase: 0, marathiText: "पाय ताठ ठेवू नका, तोल जातो. गुडघे वाकवा.", englishText: "Do not lock your knees. Bend your legs.", status: "❌ चूक: पाय ताठ ठेवल्यास शरीराची चपळता संपते! (गुडघ्यावर टॅप करा)", color: "#ef4444" },
                 { startTime: 10000, subPhase: 1, marathiText: "गुडघे हलके वाकवून एन गार्डे स्प्रिंग करा.", englishText: "Bend knees 110 degrees like loaded springs.", status: "✅ योग्य एन गार्डे: गुडघे ११०°-१२०° किंचित वाकवून स्प्रिंगसारखे तयार ठेवा!", color: "#22c55e" }
@@ -160,7 +252,7 @@
         },
         {
             drillId: 3,
-            title: "🎯 ४. लेझर टिप – टोक छातीवर रोखा",
+            title: "🎯 ४. लेझर टिप – पावले चालतानाही टोक छातीवर रोखा (९०-१२० से)",
             phases: [
                 { startTime: 0, subPhase: 0, marathiText: "मनगट स्थिर करा, टोक छताकडे जाऊ देऊ नका.", englishText: "Stabilize wrist! Keep the point directed at the chest.", status: "❌ चूक: टोक छताकडे गेले आहे! (मनगटावर टॅप करून टोक सरळ करा)", color: "#ef4444" },
                 { startTime: 8000, subPhase: 1, marathiText: "पुढे चालतानाही टोक छातीवर रोखून ठेवा.", englishText: "Advance while keeping the laser point locked on chest.", status: "🦶 पुढे चालतानाही लेझर टोक छातीवरून हलू देऊ नका (टाच ➔ चवडा)!", color: "#38bdf8" },
@@ -169,7 +261,7 @@
         },
         {
             drillId: 4,
-            title: "🤺 ५. बेसिक अटॅक – आधी हात ➔ मग पाऊल",
+            title: "🤺 ५. बेसिक अटॅक – आधी हात (Right of Way) ➔ मग स्फोटक पाऊल",
             phases: [
                 { startTime: 0, subPhase: 0, marathiText: "एन गार्डे तयार राहा.", englishText: "En Garde, ready to initiate attack.", status: "१. एन गार्डे तयार राहा - कोपर शरीराच्या समोर.", color: "#38bdf8" },
                 { startTime: 6000, subPhase: 1, marathiText: "हात आधी... मग पाय स्फोटक पुढे!", englishText: "Arm extends first for Right of Way, then explosive advance!", status: "२. आधी हात निघून रेषेत (Right of Way) ➔ मग पाय वेगाने जमिनीवर!", color: "#facc15" },
@@ -179,7 +271,7 @@
         },
         {
             drillId: 5,
-            title: "🚀 ६. रॉकेट लंज – क्षितिजसमांतर वेग",
+            title: "🚀 ६. रॉकेट लंज – क्षितिजसमांतर वेग, मागचा पाय स्थिर (१५०-१८० से)",
             phases: [
                 { startTime: 0, subPhase: 0, marathiText: "लंजसाठी तयार राहा.", englishText: "Prepare for explosive horizontal lunge.", status: "१. लक्ष्य छातीवर रोखा - लंजसाठी स्प्रिंग तयार ठेवा!", color: "#38bdf8" },
                 { startTime: 6500, subPhase: 1, marathiText: "हात आधी, मागचा पाय स्थिर, रॉकेट लंज!", englishText: "Arm first, rear foot anchored, rocket lunge drive!", status: "२. हात आधी ➔ मागच्या पायाने क्षितिजसमांतर धक्का ➔ ९०° अचूक लंज!", color: "#4ade80" },
@@ -189,7 +281,7 @@
         },
         {
             drillId: 6,
-            title: "⚡ ७. पॅरी ४ आणि रिपोस्ट",
+            title: "⚡ ७. पॅरी ४ आणि रिपोस्ट (मागे पाऊल, कोपर स्थिर, छातीवर स्पर्श)",
             phases: [
                 { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण पाहा, अंतर राखा.", englishText: "Read opponent's attack; prepare defensive retreat.", status: "१. प्रतिस्पर्ध्याचे आक्रमण ओळखा, अंतर राखण्यासाठी सज्ज राहा.", color: "#38bdf8" },
                 { startTime: 6000, subPhase: 1, marathiText: "मागे पाऊल, कोपर स्थिर, पॅरी चार!", englishText: "Retreat step, tuck elbow, Parry 4 inside line!", status: "२. मागे पाऊल (चवडा आधी), कोपर बरगडीजवळ स्थिर ठेवून डावीकडे पॅरी ४!", color: "#facc15" },
@@ -199,7 +291,7 @@
         },
         {
             drillId: 7,
-            title: "🛡️ ८. पॅरी ६ आणि रिपोस्ट",
+            title: "🛡️ ८. पॅरी ६ आणि रिपोस्ट (अंगठा वर, बरगड्यांवर स्पर्श)",
             phases: [
                 { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण ओळखा.", englishText: "Recognize incoming high-line thrust.", status: "१. प्रतिस्पर्ध्याच्या आक्रमणाची दिशा ओळखा.", color: "#38bdf8" },
                 { startTime: 6000, subPhase: 1, marathiText: "अंगठा वर, उजवीकडे पॅरी सहा!", englishText: "Thumb up, lateral Parry 6 outside line!", status: "२. मागे पाऊल, अंगठा वर (👍)! उजवीकडे मजबूत बेसने पॅरी ६!", color: "#facc15" },
@@ -209,8 +301,74 @@
         }
     ];
 
+    let effectiveElapsed = 0;
+    let lastFrameTime = performance.now();
+    let isPaused = true;
+    let playbackSpeed = 1.0;
+    let isSlowMoHold = false;
+    let currentDrill = 0;
+    let currentSubPhase = -1;
+
+    function updateDrillStateMachine(currentTimeMs) {
+        const drillIdx = Math.floor(currentTimeMs / DRILL_DURATION);
+        const localTime = currentTimeMs % DRILL_DURATION;
+        const config = drillTimelineConfigs[drillIdx];
+        if (!config) return;
+
+        let targetPhase = config.phases[0];
+        for (let i = config.phases.length - 1; i >= 0; i--) {
+            if (localTime >= config.phases[i].startTime) {
+                targetPhase = config.phases[i];
+                break;
+            }
+        }
+
+        if (currentDrill !== drillIdx || currentSubPhase !== targetPhase.subPhase) {
+            currentDrill = drillIdx;
+            currentSubPhase = targetPhase.subPhase;
+
+            if (drillTitle) drillTitle.innerText = config.title;
+            if (statusBox) {
+                statusBox.innerText = getPersonalized(targetPhase.status);
+                statusBox.style.color = targetPhase.color;
+            }
+
+            const btns = document.querySelectorAll('.drill-btn');
+            btns.forEach((b, i) => {
+                if (i === currentDrill) b.classList.add('active'); else b.classList.remove('active');
+            });
+
+            speakCoachingCue(targetPhase.marathiText, targetPhase.englishText);
+        }
+    }
+
+    // Pointer Press & Hold Slow-Motion
+    let pointerDownTime = 0;
+    let holdTimeout = null;
+
+    canvas.addEventListener('pointerdown', (e) => {
+        initAudio();
+        pointerDownTime = performance.now();
+        holdTimeout = setTimeout(() => { isSlowMoHold = true; }, 180);
+    });
+
+    canvas.addEventListener('pointerup', (e) => {
+        clearTimeout(holdTimeout);
+        const holdDuration = performance.now() - pointerDownTime;
+        isSlowMoHold = false;
+        if (holdDuration < 240) {
+            const pos = getCanvasPointerPos(e);
+            resolveErrorCorrectionTap(pos.x, pos.y);
+        }
+    });
+
+    canvas.addEventListener('pointercancel', () => {
+        clearTimeout(holdTimeout);
+        isSlowMoHold = false;
+    });
+
     // -------------------------------------------------------------
-    // ANATOMICAL RENDERING FUNCTIONS
+    // ORIGINAL ANATOMICAL INVERSE KINEMATICS & APPAREL
     // -------------------------------------------------------------
     function solveLegIK(hx, hy, ax, ay, l1, l2, bendForward = true) {
         const dx = ax - hx;
@@ -620,9 +778,6 @@
         }
     }
 
-    // -------------------------------------------------------------
-    // OPPONENT & DUMMY DRAWING
-    // -------------------------------------------------------------
     function drawTrainingDummy(x, groundY, targetY, label) {
         ctx.save();
         ctx.fillStyle = '#1e293b';
@@ -772,7 +927,7 @@
     }
 
     // -------------------------------------------------------------
-    // 8 SUB-DRILL RENDER FUNCTIONS
+    // ORIGINAL 8 DRILL ROUTINES
     // -------------------------------------------------------------
     function renderDrill1_LStance(t) {
         drawFencingStrip(GROUND_Y);
@@ -786,7 +941,7 @@
         if (phase === 0) {
             stanceWidth = 14; rearTurned = false;
             registerErrorZone('d1_foot', fencerX - 7, GROUND_Y - 8, 24, () => {
-                effectiveElapsed = 9005;
+                effectiveElapsed = 0 * DRILL_DURATION + 9005;
             });
         } else if (phase === 1) {
             stanceWidth = 14; rearTurned = true;
@@ -813,7 +968,7 @@
 
         if (phase === 0) {
             registerErrorZone('d2_knee', fencerX, 260, 28, () => {
-                effectiveElapsed = 10005;
+                effectiveElapsed = 1 * DRILL_DURATION + 10005;
             });
         }
 
@@ -919,7 +1074,7 @@
             tipAngle = -36;
             isError = true;
             registerErrorZone('d4_wrist', startX + 32, 218, 25, () => {
-                effectiveElapsed = 8005;
+                effectiveElapsed = 3 * DRILL_DURATION + 8005;
             });
         } else if (t < 18000) {
             const p = (t - 8000) / 10000;
@@ -1147,7 +1302,6 @@
         let oppAttackP = 0, rivaParryP = 0, riposteP = 0;
 
         if (t < 6000) {
-            // En garde evaluation
         } else if (t < 15000) {
             const p = (t - 6000) / 9000;
             oppAttackP = p;
@@ -1243,7 +1397,6 @@
         let oppAttackP = 0, rivaParryP = 0, riposteP = 0;
 
         if (t < 6000) {
-            // En garde
         } else if (t < 15000) {
             const p = (t - 6000) / 9000;
             oppAttackP = p;
@@ -1325,154 +1478,119 @@
     }
 
     // -------------------------------------------------------------
-    // SUB-DRILL CONTROLS & STATE UPDATES
+    // ORIGINAL TOP TIMER BAR & SPEED INDICATOR
     // -------------------------------------------------------------
-    function updateStateMachine(t) {
-        const config = drillTimelineConfigs[currentDrill];
-        if (!config) return;
+    function drawTopTimerBar(elapsed, totalDuration, drillIdx) {
+        const progress = Math.min(1, elapsed / totalDuration);
+        const remainingSec = Math.ceil((totalDuration - elapsed) / 1000);
 
-        let targetPhase = config.phases[0];
-        for (let i = config.phases.length - 1; i >= 0; i--) {
-            if (t >= config.phases[i].startTime) {
-                targetPhase = config.phases[i];
-                break;
-            }
-        }
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(40, 12, 740, 8);
+        ctx.fillStyle = progress > 0.85 ? '#22c55e' : '#38bdf8';
+        ctx.fillRect(40, 12, 740 * progress, 8);
+        ctx.strokeStyle = '#334155'; ctx.strokeRect(40, 12, 740, 8);
 
-        if (currentSubPhase !== targetPhase.subPhase) {
-            currentSubPhase = targetPhase.subPhase;
+        ctx.fillStyle = '#facc15'; ctx.font = '600 13px sans-serif';
+        ctx.fillText(`⏱️ वेळ: ${remainingSec} से | सराव ${drillIdx + 1}/८`, 42, 36);
 
-            const badge = document.getElementById('drillNumberBadge');
-            if (badge) badge.innerText = `Drill #1 (${currentDrill + 1}/8)`;
-
-            const statusBox = document.getElementById('status-box');
-            if (statusBox) {
-                statusBox.innerText = typeof getPersonalizedText === 'function' ? getPersonalizedText(targetPhase.status) : targetPhase.status;
-                statusBox.style.color = targetPhase.color;
-            }
-
-            if (typeof speakCoachingCue === 'function') {
-                speakCoachingCue(targetPhase.marathiText, targetPhase.englishText);
-            }
-        }
-
-        const remainingSec = Math.max(0, Math.ceil((DRILL_DURATION - t) / 1000));
-        const timerNum = document.getElementById('timer-number');
-        if (timerNum) timerNum.innerText = `${remainingSec}s`;
-
-        const timerProgress = document.getElementById('timerProgress');
-        if (timerProgress) {
-            const pct = Math.min(100, (t / DRILL_DURATION) * 100);
-            timerProgress.setAttribute('stroke-dashoffset', 100 - pct);
+        if (isSlowMoHold || playbackSpeed === 0.25) {
+            ctx.fillStyle = '#facc15';
+            ctx.fillText("🐢 स्लो-मोशन (०.२५x)", 360, 36);
+        } else if (playbackSpeed === 1.5) {
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText("⚡ जलद (१.५x)", 360, 36);
         }
     }
 
-    function switchSubDrill(idx) {
-        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-        currentDrill = (idx + 8) % 8;
-        effectiveElapsed = 0;
-        currentSubPhase = -1;
-        lastFrameTime = performance.now();
-        updateStateMachine(0);
-    }
-
-    function nextSubDrill() {
-        switchSubDrill(currentDrill + 1);
-    }
-
-    function prevSubDrill() {
-        switchSubDrill(currentDrill - 1);
-    }
-
-    // Wire dock buttons directly to sub-drill stepping
-    function bindDockButtons() {
-        const btnNext = document.getElementById('btnNext');
-        const btnPrev = document.getElementById('btnPrev');
-        if (btnNext) btnNext.onclick = nextSubDrill;
-        if (btnPrev) btnPrev.onclick = prevSubDrill;
-    }
-
-    function loop() {
-        if (isPaused) return;
-
+    // -------------------------------------------------------------
+    // MAIN RENDER LOOP
+    // -------------------------------------------------------------
+    function render() {
         const now = performance.now();
         const dt = now - lastFrameTime;
         lastFrameTime = now;
 
-        if (now >= hitStopUntil) {
-            effectiveElapsed += dt;
-
-            // Auto-advance to next sub-drill after 30s
-            if (effectiveElapsed >= DRILL_DURATION) {
-                nextSubDrill();
-            } else {
-                updateStateMachine(effectiveElapsed);
-            }
+        if (now >= hitStopUntil && !isPaused) {
+            const activeRate = isSlowMoHold ? 0.25 : playbackSpeed;
+            effectiveElapsed = (effectiveElapsed + dt * activeRate) % TOTAL_MASTER_TIME;
+            updateDrillStateMachine(effectiveElapsed);
         }
 
         ctx.clearRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
         applyCameraTransform();
 
-        if (currentDrill === 0) renderDrill1_LStance(effectiveElapsed);
-        else if (currentDrill === 1) renderDrill2_EnGarde(effectiveElapsed);
-        else if (currentDrill === 2) renderDrill3_StepSequence(effectiveElapsed);
-        else if (currentDrill === 3) renderDrill4_LaserTip(effectiveElapsed);
-        else if (currentDrill === 4) renderDrill5_BasicAttack(effectiveElapsed);
-        else if (currentDrill === 5) renderDrill6_Lunge(effectiveElapsed);
-        else if (currentDrill === 6) renderDrill7_Parry4(effectiveElapsed);
-        else if (currentDrill === 7) renderDrill8_Parry6(effectiveElapsed);
+        const drillElapsed = effectiveElapsed % DRILL_DURATION;
+
+        if (currentDrill === 0) renderDrill1_LStance(drillElapsed);
+        else if (currentDrill === 1) renderDrill2_EnGarde(drillElapsed);
+        else if (currentDrill === 2) renderDrill3_StepSequence(drillElapsed);
+        else if (currentDrill === 3) renderDrill4_LaserTip(drillElapsed);
+        else if (currentDrill === 4) renderDrill5_BasicAttack(drillElapsed);
+        else if (currentDrill === 5) renderDrill6_Lunge(drillElapsed);
+        else if (currentDrill === 6) renderDrill7_Parry4(drillElapsed);
+        else if (currentDrill === 7) renderDrill8_Parry6(drillElapsed);
 
         drawActiveErrorReticles();
         updateAndDrawRipples();
         restoreCameraTransform();
 
-        animFrameId = requestAnimationFrame(loop);
+        drawTopTimerBar(drillElapsed, DRILL_DURATION, currentDrill);
+        requestAnimationFrame(render);
     }
+
+    render();
 
     // -------------------------------------------------------------
-    // PUBLIC API FOR MASTER SHELL
+    // MASTER SHELL INTERFACE
     // -------------------------------------------------------------
-    function init(canvasCtx, w, h, gY) {
-        ctx = canvasCtx;
-        BASE_WIDTH = w;
-        BASE_HEIGHT = h;
-        GROUND_Y = gY;
-        bindDockButtons();
-        restart();
-    }
-
-    function restart() {
-        if (animFrameId) cancelAnimationFrame(animFrameId);
-        effectiveElapsed = 0;
-        currentSubPhase = -1;
-        lastFrameTime = performance.now();
-        isPaused = false;
-        bindDockButtons();
-        updateStateMachine(0);
-        loop();
-    }
-
-    function setPaused(paused) {
-        if (isPaused === paused) return;
-        isPaused = paused;
-        if (!isPaused) {
-            lastFrameTime = performance.now();
-            loop();
-        } else {
-            if (animFrameId) cancelAnimationFrame(animFrameId);
-        }
-    }
-
-    function handleTap(clickX, clickY) {
-        resolveErrorCorrectionTap(clickX, clickY);
-    }
-
     window.RivaCartridge = {
-        init: init,
-        restart: restart,
-        setPaused: setPaused,
-        handleTap: handleTap,
-        next: nextSubDrill,
-        prev: prevSubDrill
+        init: () => {
+            initAudio();
+            isPaused = false;
+            effectiveElapsed = 0;
+            currentDrill = 0;
+            currentSubPhase = -1;
+            lastFrameTime = performance.now();
+            updateDrillStateMachine(0);
+        },
+        start: () => {
+            stopAllSpeech();
+            initAudio();
+            isPaused = false;
+            effectiveElapsed = currentDrill * DRILL_DURATION;
+            currentSubPhase = -1;
+            lastFrameTime = performance.now();
+            updateDrillStateMachine(effectiveElapsed);
+        },
+        pause: () => {
+            initAudio();
+            if (!isPaused) {
+                isPaused = true;
+                stopAllSpeech();
+            } else {
+                isPaused = false;
+                lastFrameTime = performance.now();
+            }
+        },
+        stop: () => {
+            isPaused = true;
+            stopAllSpeech();
+        },
+        switchDrill: (idx) => {
+            stopAllSpeech();
+            currentDrill = idx;
+            effectiveElapsed = idx * DRILL_DURATION;
+            currentSubPhase = -1;
+            lastFrameTime = performance.now();
+            updateDrillStateMachine(effectiveElapsed);
+        },
+        toggleSpeed: (rate) => {
+            if (playbackSpeed === rate) {
+                playbackSpeed = 1.0;
+                return false;
+            } else {
+                playbackSpeed = rate;
+                return true;
+            }
+        }
     };
 })();
