@@ -9,112 +9,235 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@500;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        :root {
+            --bg-core: #080c14;
+            --bg-surface: #0f172a;
+            --bg-elevated: #1e293b;
+            --border-subtle: #1e293b;
+            --border-active: #334155;
+            --brand-cyan: #38bdf8;
+            --brand-blue: #0284c7;
+            --text-primary: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body {
-            margin: 0; padding: 0;
-            background: #080c14; color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-core);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
             min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        /* 1-100 NUMERIC CATALOG */
+        /* VIEW 1: 1-100 NUMERIC GRID */
         .catalog-stage {
-            display: flex; flex-direction: column;
-            width: 100%; max-width: 500px;
-            padding: 16px 12px 32px;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 500px;
+            padding: 14px 12px 32px;
         }
         .catalog-header {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 16px; background: #0f172a;
-            border: 1px solid #1e293b; border-radius: 14px; margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            margin-bottom: 14px;
         }
-        .catalog-title { font-size: 18px; font-weight: 800; color: #38bdf8; }
+        .catalog-title { font-size: 16px; font-weight: 800; color: var(--brand-cyan); }
         .user-chip {
-            background: #1e293b; border: 1px solid #334155;
-            color: #38bdf8; font-size: 13px; font-weight: 700;
-            padding: 6px 12px; border-radius: 9999px; cursor: pointer;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-active);
+            color: var(--brand-cyan);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            cursor: pointer;
         }
         .numeric-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
         }
         .num-card {
-            background: #0f172a; border: 1.5px solid #1e293b; border-radius: 14px;
-            aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center;
-            font-size: 26px; font-weight: 800; color: #f8fafc; cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.12s ease;
+            background: var(--bg-surface);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: 14px;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
         }
-        .num-card:active { transform: scale(0.92); background: #0284c7; }
+        .num-card:active { transform: scale(0.92); background: var(--brand-blue); }
 
-        /* MASTER ARENA (RESTORED FROM ORIGINAL) */
+        /* VIEW 2: MASTER ARENA */
         .arena-stage {
-            width: 100%; max-width: 820px;
-            padding: 6px 8px 24px;
-            display: flex; flex-direction: column; align-items: center;
+            width: 100%;
+            max-width: 820px;
+            padding: 6px 8px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .top-bar {
-            width: 100%; display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 4px;
+        .top-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            padding: 0 4px;
         }
-        .back-btn {
-            background: #1e293b; border: 1px solid #334155; color: #f8fafc;
-            border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 700;
-            cursor: pointer; display: flex; align-items: center; gap: 4px;
+        .header-back-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-active);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-        #drill-title {
-            font-size: 15px; font-weight: 700; color: #38bdf8; text-align: center;
-            flex: 1; padding: 0 8px;
+        .drill-badge {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-active);
+            color: var(--brand-cyan);
+            padding: 5px 14px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        #status-box {
-            font-size: 14px; font-weight: 600; min-height: 44px; color: #facc15;
-            text-align: center; width: 100%; padding: 0 8px;
-            display: flex; align-items: center; justify-content: center; line-height: 1.35;
+        .sub-nav-btn {
+            background: none; border: none; color: var(--brand-cyan);
+            font-size: 14px; font-weight: 800; cursor: pointer; padding: 0 4px;
+        }
+        .timer-ring-container {
+            position: relative;
+            width: 36px;
+            height: 36px;
+        }
+        .timer-ring-svg {
+            width: 36px;
+            height: 36px;
+            transform: rotate(-90deg);
+        }
+        .timer-track { fill: none; stroke: var(--bg-elevated); stroke-width: 3.5; }
+        .timer-bar { fill: none; stroke: var(--brand-cyan); stroke-width: 3.5; stroke-linecap: round; }
+        .timer-label {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 800; color: var(--text-primary);
         }
 
-        /* LOCKED ASPECT RATIO & ORIGINAL BRIGHTNESS */
-        #canvas-wrapper {
-            width: 100%; max-width: 820px;
+        /* LOCKED CANVAS & ORIGINAL BLUE SPOTLIGHT */
+        .canvas-host {
+            width: 100%;
+            max-width: 820px;
             aspect-ratio: 820 / 420;
             position: relative;
         }
-        canvas {
-            width: 100% !important; height: 100% !important;
-            background: radial-gradient(circle at 50% 35%, #131b2e 0%, #080d17 100%);
-            border: 2px solid #334155; border-radius: 12px; display: block;
+        #fencingCanvas {
+            width: 100% !important;
+            height: 100% !important;
+            aspect-ratio: 820 / 420;
+            background: radial-gradient(circle at 50% 35%, #131b2e 0%, #080d17 100%) !important;
+            border: 2px solid var(--border-active);
+            border-radius: 12px;
+            display: block;
             box-shadow: 0 12px 30px rgba(0,0,0,0.6);
             touch-action: none;
         }
 
-        .hint-bar { font-size: 12px; color: #94a3b8; margin-top: 6px; text-align: center; }
+        .coach-panel {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 6px;
+        }
+        .coach-pill {
+            font-family: 'Mukta', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #facc15;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 8px;
+        }
+        .hint-subtext {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
 
-        /* THE 8 SUB-DRILL BUTTONS (ORIGINAL GRID) */
-        .drill-nav {
-            margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px;
-            justify-content: center; width: 100%;
+        /* FLOATING ATHLETIC CONTROLS DOCK */
+        .controls-dock {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 6px 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-active);
+            border-radius: 16px;
         }
-        .drill-btn {
-            background: #1e293b; color: #cbd5e1; border: 1px solid #334155;
-            padding: 7px 10px; border-radius: 8px; font-weight: 600; font-size: 12px;
-            cursor: pointer; flex: 1 1 calc(25% - 8px); min-width: 85px; text-align: center;
+        .dock-btn {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-active);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.12s ease;
         }
-        .drill-btn.active {
-            background: #0284c7; color: #ffffff; border-color: #38bdf8;
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+        .dock-btn:active { transform: scale(0.94); }
+        .dock-btn.active {
+            background: var(--brand-blue);
+            border-color: var(--brand-cyan);
+            color: #fff;
         }
-
-        /* CONTROLS DOCK */
-        .controls {
-            margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;
-            width: 100%; max-width: 540px; justify-content: center;
+        .play-hero-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #040711;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(255,255,255,0.25);
         }
-        .ctrl-btn {
-            padding: 10px 14px; font-size: 13px; font-weight: 700; border: none;
-            border-radius: 8px; cursor: pointer; flex: 1; min-width: 110px;
-        }
-        .btn-speed { background: #334155; color: #38bdf8; border: 1px solid #475569; }
-        .btn-speed.active { background: #0284c7; color: #ffffff; border-color: #38bdf8; }
-        .btn-start { background: #0284c7; color: white; }
-        .btn-pause { background: #d97706; color: white; }
+        .play-hero-btn:active { transform: scale(0.92); }
 
         /* ONBOARDING MODAL */
         .modal-overlay {
@@ -123,25 +246,25 @@
             display: flex; align-items: center; justify-content: center; padding: 16px;
         }
         .modal-card {
-            width: 100%; max-width: 360px; background: #0f172a;
-            border: 1px solid #38bdf8; border-radius: 16px; padding: 20px;
+            width: 100%; max-width: 360px; background: var(--bg-surface);
+            border: 1px solid var(--brand-cyan); border-radius: 16px; padding: 20px;
         }
-        .modal-card label { font-size: 12px; font-weight: 700; color: #94a3b8; display: block; margin-top: 10px; }
+        .modal-card label { font-size: 12px; font-weight: 700; color: var(--text-muted); display: block; margin-top: 10px; }
         .modal-card input {
-            width: 100%; height: 40px; background: #1e293b; border: 1px solid #334155;
+            width: 100%; height: 40px; background: var(--bg-elevated); border: 1px solid var(--border-active);
             border-radius: 8px; padding: 0 10px; color: #fff; font-size: 14px; margin-top: 4px;
         }
         .modal-row { display: flex; gap: 8px; }
         .modal-row > div { flex: 1; }
         .modal-save-btn {
-            width: 100%; height: 44px; margin-top: 16px; background: #0284c7;
+            width: 100%; height: 44px; margin-top: 16px; background: var(--brand-blue);
             color: #fff; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
-    <!-- VIEW 1: 1-100 NUMERIC GRID (ACTIVE ONLY) -->
+    <!-- 1-100 NUMERIC CATALOG -->
     <div id="catalogView" class="catalog-stage">
         <div class="catalog-header">
             <span class="catalog-title">Riva Fencer</span>
@@ -150,46 +273,62 @@
         <div class="numeric-grid" id="numericGridContainer"></div>
     </div>
 
-    <!-- VIEW 2: ARENA VIEW (PRESERVED FROM ORIGINAL RIVA DRILL 1) -->
+    <!-- MODERN MASTER ARENA -->
     <div id="arenaView" class="arena-stage" style="display: none;">
-        <div class="top-bar">
-            <button class="back-btn" onclick="closeArenaView()">← यादी</button>
-            <div id="drill-title">📐 १. पायांची अचूक 'L' पोझिशन</div>
-        </div>
+        <header class="top-header">
+            <button class="header-back-btn" onclick="closeArenaView()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                <span>यादी</span>
+            </button>
+            <div class="drill-badge">
+                <button class="sub-nav-btn" onclick="triggerPrevSub()">◀</button>
+                <span id="subDrillTitle">Drill #1 (1/8)</span>
+                <button class="sub-nav-btn" onclick="triggerNextSub()">▶</button>
+            </div>
+            <div class="timer-ring-container">
+                <svg class="timer-ring-svg" viewBox="0 0 36 36">
+                    <path class="timer-track" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                    <path id="timerProgress" class="timer-bar" stroke-dashoffset="0" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                </svg>
+                <span id="timer-number" class="timer-label">30s</span>
+            </div>
+        </header>
 
-        <div id="status-box">सुरू करण्यासाठी खालील 'सुरू करा' बटण दाबा 🤺</div>
-
-        <div id="canvas-wrapper">
+        <div class="canvas-host">
             <canvas id="fencingCanvas"></canvas>
         </div>
 
-        <div class="hint-bar">💡 स्क्रीन दाबून धरा = ०.२५x स्लो-मोशन | लाल त्रुटीवर टॅप करा = दुरुस्त!</div>
+        <section class="coach-panel">
+            <div class="coach-pill" id="status-box">सराव सुरू करण्यासाठी प्ले दाबा</div>
+            <div class="hint-subtext">💡 स्क्रीन दाबून धरा = स्लो-मोशन | त्रुटीवर टॅप करा = दुरुस्त!</div>
+        </section>
 
-        <!-- 8 SUB-DRILL DIRECT BUTTONS -->
-        <div class="drill-nav">
-            <button class="drill-btn active" onclick="triggerSubDrill(0)">१. 'L' पोझिशन</button>
-            <button class="drill-btn" onclick="triggerSubDrill(1)">२. एन गार्डे</button>
-            <button class="drill-btn" onclick="triggerSubDrill(2)">३. पाऊल क्रम</button>
-            <button class="drill-btn" onclick="triggerSubDrill(3)">४. लेझर टिप</button>
-            <button class="drill-btn" onclick="triggerSubDrill(4)">५. अटॅक</button>
-            <button class="drill-btn" onclick="triggerSubDrill(5)">६. रॉकेट लंज</button>
-            <button class="drill-btn" onclick="triggerSubDrill(6)">७. पॅरी ४</button>
-            <button class="drill-btn" onclick="triggerSubDrill(7)">८. पॅरी ६</button>
-        </div>
-
-        <!-- PLAYBACK & SPEED CONTROLS -->
-        <div class="controls">
-            <button class="ctrl-btn btn-speed" id="btnSlow" onclick="toggleSlowMo()">🐢 स्लो (०.२५x)</button>
-            <button class="ctrl-btn btn-start" onclick="triggerStart()">🔊 सुरू / रीस्टार्ट</button>
-            <button class="ctrl-btn btn-pause" onclick="triggerPause()">⏸ थांबवा / प्ले</button>
-            <button class="ctrl-btn btn-speed" id="btnFast" onclick="toggleFastForward()">⚡ जलद (१.५x)</button>
-        </div>
+        <!-- SPEED & PLAYBACK DOCK -->
+        <nav class="controls-dock">
+            <button class="dock-btn" id="btnSlow" onclick="toggleSlowMo()">
+                <span>🐢 स्लो</span>
+            </button>
+            <button class="dock-btn" onclick="triggerRestart()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/></svg>
+            </button>
+            <button class="play-hero-btn" id="playHeroBtn" onclick="togglePlayPause()">
+                <svg id="playIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+                <svg id="pauseIcon" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+            </button>
+            <button class="dock-btn" id="audioToggleBtn" onclick="toggleAudio()">
+                <svg id="audioOnIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                <svg id="audioOffIcon" style="display:none;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+            </button>
+            <button class="dock-btn" id="btnFast" onclick="toggleFastForward()">
+                <span>⚡ जलद</span>
+            </button>
+        </nav>
     </div>
 
     <!-- PROFILE MODAL -->
     <div id="profileModal" class="modal-overlay" style="display: none;">
         <div class="modal-card">
-            <h3 style="margin:0 0 6px 0; color:#fff;">खेळाडू प्रोफाइल</h3>
+            <h3 style="margin-bottom: 4px; color:#f8fafc;">खेळाडू प्रोफाइल</h3>
             <form onsubmit="saveAthleteProfile(event)">
                 <label>नाव</label>
                 <input type="text" id="athleteNameInput" placeholder="रीवा" required>
@@ -213,16 +352,17 @@
 <script>
 const AVAILABLE_DRILLS = [1];
 let currentCartridge = null;
+let isAudioMuted = false;
 
 function buildCatalog() {
-    const container = document.getElementById('numericGridContainer');
-    container.innerHTML = '';
-    AVAILABLE_DRILLS.forEach(n => {
-        const c = document.createElement('div');
-        c.className = 'num-card';
-        c.innerText = n;
-        c.onclick = () => loadDrill(n);
-        container.appendChild(c);
+    const c = document.getElementById('numericGridContainer');
+    c.innerHTML = '';
+    AVAILABLE_DRILLS.forEach(num => {
+        const d = document.createElement('div');
+        d.className = 'num-card';
+        d.innerText = num;
+        d.onclick = () => loadDrill(num);
+        c.appendChild(d);
     });
 }
 buildCatalog();
@@ -249,36 +389,53 @@ function loadCartridge(id) {
         if (window.RivaCartridge) {
             currentCartridge = window.RivaCartridge;
             currentCartridge.init();
+            setPlayState(true);
         }
     };
     document.body.appendChild(s);
 }
 
-function triggerSubDrill(idx) {
-    if (currentCartridge && currentCartridge.switchDrill) currentCartridge.switchDrill(idx);
-    document.querySelectorAll('.drill-btn').forEach((b, i) => {
-        if (i === idx) b.classList.add('active'); else b.classList.remove('active');
-    });
+function setPlayState(isPlaying) {
+    document.getElementById('playIcon').style.display = isPlaying ? 'none' : 'block';
+    document.getElementById('pauseIcon').style.display = isPlaying ? 'block' : 'none';
 }
 
-function triggerStart() { if (currentCartridge) currentCartridge.start(); }
-function triggerPause() { if (currentCartridge) currentCartridge.pause(); }
+function togglePlayPause() {
+    if (!currentCartridge) return;
+    const isPlaying = currentCartridge.togglePlay();
+    setPlayState(isPlaying);
+}
+
+function triggerRestart() {
+    if (!currentCartridge) return;
+    currentCartridge.restart();
+    setPlayState(true);
+}
 
 function toggleSlowMo() {
     if (!currentCartridge) return;
-    const active = currentCartridge.toggleSpeed(0.25);
-    document.getElementById('btnSlow').classList.toggle('active', active);
+    const isSlow = currentCartridge.toggleSpeed(0.25);
+    document.getElementById('btnSlow').classList.toggle('active', isSlow);
     document.getElementById('btnFast').classList.remove('active');
 }
 
 function toggleFastForward() {
     if (!currentCartridge) return;
-    const active = currentCartridge.toggleSpeed(1.5);
-    document.getElementById('btnFast').classList.toggle('active', active);
+    const isFast = currentCartridge.toggleSpeed(1.5);
+    document.getElementById('btnFast').classList.toggle('active', isFast);
     document.getElementById('btnSlow').classList.remove('active');
 }
 
-// Biometrics Profile Storage
+function triggerNextSub() { if (currentCartridge) currentCartridge.nextSub(); }
+function triggerPrevSub() { if (currentCartridge) currentCartridge.prevSub(); }
+
+function toggleAudio() {
+    isAudioMuted = !isAudioMuted;
+    document.getElementById('audioOnIcon').style.display = isAudioMuted ? 'none' : 'block';
+    document.getElementById('audioOffIcon').style.display = isAudioMuted ? 'block' : 'none';
+    if (currentCartridge) currentCartridge.setMuted(isAudioMuted);
+}
+
 function checkOnboarding() {
     const a = localStorage.getItem('riva_athlete');
     if (!a) {
