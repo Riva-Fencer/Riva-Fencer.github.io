@@ -138,5 +138,13 @@
         </div>
     </main>
 
+    <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(() => console.log('Update Engine Active'))
+      .catch((err) => console.log('Service Worker Failed:', err));
+  }
+</script>
+    
 </body>
 </html>
