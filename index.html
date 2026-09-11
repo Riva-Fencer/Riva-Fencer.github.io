@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Riva The Fencer</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#080c14">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            margin: 0;
+            padding: calc(env(safe-area-inset-top) + 20px) 16px calc(env(safe-area-inset-bottom) + 20px);
+            background: #080c14;
+            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', 'Mukta', -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .header {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .brand-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.3px;
+        }
+        .category-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94a3b8;
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 4px 10px;
+            border-radius: 999px;
+            letter-spacing: 0.2px;
+        }
+        .card-stack {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .drill-card {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 16px;
+            padding: 24px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: transform 0.1s ease, opacity 0.1s ease;
+        }
+        .drill-card:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        .card-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .badge-num {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .drill-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f8fafc;
+            letter-spacing: -0.2px;
+        }
+        .chevron {
+            color: #475569;
+            font-size: 20px;
+            font-weight: 400;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="brand-title">Riva The Fencer</div>
+        <div class="category-badge">U10 मास्टरक्लास</div>
+    </header>
+
+    <main class="card-stack">
+        <div class="drill-card" onclick="location.href='drill1.html'">
+            <div class="card-left">
+                <div class="badge-num">01</div>
+                <div class="drill-title">Drill 1</div>
+            </div>
+            <div class="chevron">›</div>
+        </div>
+
+        <div class="drill-card" onclick="location.href='drill2.html'">
+            <div class="card-left">
+                <div class="badge-num">02</div>
+                <div class="drill-title">Drill 2</div>
+            </div>
+            <div class="chevron">›</div>
+        </div>
+
+        <div class="drill-card" onclick="location.href='drill3.html'">
+            <div class="card-left">
+                <div class="badge-num">03</div>
+                <div class="drill-title">Drill 3</div>
+            </div>
+            <div class="chevron">›</div>
+        </div>
+    </main>
+
+</body>
+</html>
