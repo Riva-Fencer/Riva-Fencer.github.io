@@ -1,6 +1,6 @@
 /**
  * Riva Fencer - Cartridge 001
- * Drill 1: पायांची अचूक 'L' पोझिशन व तोल (L-Stance & Balance)
+ * Drill 1: पायांची अचूक 'L' पोझिशन व तोल (L-Stance & Dynamic En Garde)
  */
 (function () {
     let ctx, W, H, groundY;
@@ -13,26 +13,27 @@
     let currentPhase = -1;
     let targetReticle = null;
 
+    // Timeline configuration
     const PHASES = [
         {
             start: 0,
             end: 9,
-            text: "पायांमध्ये ९० अंशाचा अचूक 'L' आकार ठेवा",
-            cue: "शाब्बास रीवा, दोन्ही पायांमध्ये नव्वद अंशाचा अचूक एल आकार तयार करा!",
-            target: { x: 380, y: 295, r: 28, label: "टाच जुळवा" }
+            text: "पायांमध्ये ९० अंशाचा अचूक 'L' आकार तयार करा",
+            cue: "शाब्बास रीवा, पायांमध्ये नव्वद अंशाचा अचूक एल आकार तयार करा!",
+            target: { x: 390, y: 312, r: 32, label: "टाच जुळवा (९०°)" }
         },
         {
             start: 9,
             end: 18,
-            text: "गुडघे थोडे वाकवा (En Garde Stance)",
-            cue: "गुडघे हलके वाकवा, पाठीचा कणा ताठ ठेवा!",
-            target: { x: 440, y: 230, r: 24, label: "गुडघा वाकवा" }
+            text: "गुडघे वाकवून खोल एन गार्डे पोझिशन घ्या",
+            cue: "गुडघे वाकवा, पाठीचा कणा ताठ ठेवून एन गार्डे पोझिशन घ्या!",
+            target: { x: 470, y: 245, r: 28, label: "गुडघा वाकवा" }
         },
         {
             start: 18,
             end: 30,
-            text: "तोल मध्यभागी ठेवा आणि स्थिर राहा",
-            cue: "उत्कृष्ट! शरीराचा तोल दोन्ही पायांवर समान ठेवा.",
+            text: "तोल ५०-५० मध्यभागी ठेवा आणि स्थिर राहा",
+            cue: "उत्कृष्ट! शरीराचा तोल मध्यभागी ठेवून स्थिर राहा.",
             target: null
         }
     ];
@@ -74,9 +75,13 @@
         if (Math.hypot(dx, dy) <= targetReticle.r * 1.5) {
             targetReticle.clicked = true;
             if (typeof speakCoachingCue === 'function') {
-                speakCoachingCue("अचूक दुरुस्ती!");
+                speakCoachingCue("अचूक! खूप छान.");
             }
         }
+    }
+
+    function easeInOutQuad(t) {
+        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
     }
 
     function updateHUD(elapsedSec) {
@@ -104,130 +109,347 @@
             }
         }
 
-        if (elapsedSec >= DURATION) {
+        if (elapsedSec >= DURATION && currentPhase !== 99) {
             const statusBox = document.getElementById('status-box');
-            if (statusBox) statusBox.innerText = "सराव पूर्ण! शाब्बास!";
-            if (typeof speakCoachingCue === 'function' && currentPhase !== 99) {
-                speakCoachingCue("शाब्बास रीवा, आजचा सराव पूर्ण झाला!");
-                currentPhase = 99;
+            if (statusBox) statusBox.innerText = "सराव यशस्वीरीत्या पूर्ण! शाब्बास!";
+            if (typeof speakCoachingCue === 'function') {
+                speakCoachingCue("शाब्बास रीवा, अचूक पोझिशन! आजचा सराव पूर्ण झाला.");
             }
+            currentPhase = 99;
         }
     }
 
     function drawPiste() {
-        ctx.fillStyle = "#090d16";
-        ctx.fillRect(0, 0, W, H);
+        // High-tech dark metallic piste surface
+        const grad = ctx.createLinearGradient(0, groundY - 10, 0, H);
+        grad.addColorStop(0, "#0a1120");
+        grad.addColorStop(1, "#040711");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, groundY, W, H - groundY);
 
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.25)";
-        ctx.lineWidth = 2;
+        // Strip borders with athletic cyan glow
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(40, groundY);
-        ctx.lineTo(W - 40, groundY);
+        ctx.moveTo(30, groundY);
+        ctx.lineTo(W - 30, groundY);
         ctx.stroke();
 
-        for (let x = 120; x <= W - 120; x += 80) {
+        // Strip grid marks
+        for (let x = 70; x <= W - 70; x += 60) {
             ctx.strokeStyle = "rgba(148, 163, 184, 0.15)";
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.moveTo(x, groundY - 6);
-            ctx.lineTo(x, groundY + 6);
+            ctx.moveTo(x, groundY - 4);
+            ctx.lineTo(x, groundY + 8);
             ctx.stroke();
         }
     }
 
     function drawFencer(elapsedSec) {
-        const rootX = 400;
-        const rootY = groundY;
-        const isBending = elapsedSec >= 9;
+        // Compute smooth stance progression
+        let squatT = 0;
+        if (elapsedSec < 9) {
+            squatT = 0; // Standing upright in L-Stance
+        } else if (elapsedSec < 12) {
+            squatT = easeInOutQuad((elapsedSec - 9) / 3); // Sinking smoothly into En Garde
+        } else {
+            squatT = 1; // Locked deep En Garde stance
+        }
+
+        // Natural athletic breathing sway
+        const sway = Math.sin(elapsedSec * 3) * (squatT > 0.8 ? 1.5 : 0.8);
+
+        // Core Biomechanical Coordinates
+        const rootX = 390;
+        const hipDrop = squatT * 38;
+        const hipY = (groundY - 145) + hipDrop + sway;
+
+        const frontFootX = rootX + 75 + (squatT * 28);
+        const frontFootY = groundY;
+        const rearFootX = rootX - 60;
+        const rearFootY = groundY;
+
+        // Dynamic Knee Interpolation
+        const frontKneeX = rootX + 45 + (squatT * 36);
+        const frontKneeY = hipY + 58 + (squatT * 12);
+
+        const rearKneeX = rootX - 35 - (squatT * 8);
+        const rearKneeY = hipY + 56 + (squatT * 14);
+
+        // Ambient Contact Shadows
+        const drawShadow = (x, y, radiusX, radiusY) => {
+            ctx.save();
+            const shadowGrad = ctx.createRadialGradient(x, y, 2, x, y, radiusX);
+            shadowGrad.addColorStop(0, "rgba(0, 0, 0, 0.65)");
+            shadowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+            ctx.fillStyle = shadowGrad;
+            ctx.beginPath();
+            ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        };
+
+        drawShadow(rearFootX + 8, groundY + 2, 28, 7);
+        drawShadow(frontFootX + 10, groundY + 2, 32, 7);
+        drawShadow(rootX + 15, groundY + 2, 65, 10); // Core body shadow
+
+        // 1. 90-Degree Floor Alignment Graphic
+        ctx.save();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "rgba(250, 204, 21, 0.85)";
+        ctx.fillStyle = "rgba(250, 204, 21, 0.15)";
+
+        ctx.beginPath();
+        ctx.moveTo(rearFootX, groundY);
+        ctx.lineTo(rearFootX + 45, groundY);
+        ctx.lineTo(rearFootX + 45, groundY - 40);
+        ctx.stroke();
+
+        // 90-degree corner square symbol
+        ctx.fillRect(rearFootX + 33, groundY - 12, 12, 12);
+        ctx.strokeRect(rearFootX + 33, groundY - 12, 12, 12);
+
+        ctx.fillStyle = "#fde047";
+        ctx.font = "700 11px 'Plus Jakarta Sans', sans-serif";
+        ctx.fillText("90° L-STANCE", rearFootX - 10, groundY + 20);
+        ctx.restore();
+
+        // 2. Center of Gravity Balance Line (Active in Phase 3)
+        if (elapsedSec >= 18) {
+            ctx.save();
+            ctx.strokeStyle = "#38bdf8";
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(rootX + 12, hipY - 60);
+            ctx.lineTo(rootX + 12, groundY);
+            ctx.stroke();
+
+            ctx.fillStyle = "#38bdf8";
+            ctx.font = "700 10px 'Plus Jakarta Sans', sans-serif";
+            ctx.fillText("50% / 50% BALANCE", rootX - 40, groundY - 8);
+            ctx.restore();
+        }
 
         ctx.save();
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 
-        const frontFootX = rootX + 55;
-        const frontKneeX = isBending ? rootX + 40 : rootX + 30;
-        const frontKneeY = isBending ? rootY - 45 : rootY - 55;
-        const hipY = isBending ? rootY - 105 : rootY - 120;
-
-        ctx.strokeStyle = "#38bdf8";
-        ctx.lineWidth = 6;
+        // 3. Rear Leg (Breeches, Knee, Calf, and Foot)
+        // Thigh
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 15;
         ctx.beginPath();
-        ctx.moveTo(rootX + 15, hipY);
-        ctx.lineTo(frontKneeX, frontKneeY);
-        ctx.lineTo(frontFootX, rootY);
-        ctx.lineTo(frontFootX + 25, rootY);
+        ctx.moveTo(rootX - 6, hipY + 8);
+        ctx.lineTo(rearKneeX, rearKneeY);
         ctx.stroke();
 
-        const backKneeX = isBending ? rootX - 35 : rootX - 25;
-        const backKneeY = isBending ? rootY - 45 : rootY - 55;
-        const backFootX = rootX - 45;
-
-        ctx.strokeStyle = "#0284c7";
+        // Lower Leg / Shin
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 13;
         ctx.beginPath();
-        ctx.moveTo(rootX - 15, hipY);
-        ctx.lineTo(backKneeX, backKneeY);
-        ctx.lineTo(backFootX, rootY);
+        ctx.moveTo(rearKneeX, rearKneeY);
+        ctx.lineTo(rearFootX + 8, rearFootY - 6);
         ctx.stroke();
 
-        ctx.strokeStyle = "rgba(250, 204, 21, 0.6)";
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(backFootX, rootY);
-        ctx.lineTo(rootX + 10, rootY);
-        ctx.lineTo(frontFootX + 25, rootY);
-        ctx.stroke();
-
-        const chestX = rootX;
-        const chestY = hipY - 55;
-        ctx.strokeStyle = "#f8fafc";
-        ctx.lineWidth = 8;
-        ctx.beginPath();
-        ctx.moveTo(rootX, hipY);
-        ctx.lineTo(chestX, chestY);
-        ctx.stroke();
-
+        // Rear Fencing Shoe (Side View Profile)
         ctx.fillStyle = "#1e293b";
-        ctx.strokeStyle = "#38bdf8";
-        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.arc(chestX, chestY - 24, 18, 0, Math.PI * 2);
+        ctx.roundRect(rearFootX - 12, rearFootY - 8, 38, 10, 3);
+        ctx.fill();
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillRect(rearFootX - 10, rearFootY - 2, 34, 3); // Blue sole grip
+
+        // 4. Front Leg (Lead Stance toward Opponent)
+        // Thigh
+        ctx.strokeStyle = "#f1f5f9";
+        ctx.lineWidth = 16;
+        ctx.beginPath();
+        ctx.moveTo(rootX + 12, hipY + 8);
+        ctx.lineTo(frontKneeX, frontKneeY);
+        ctx.stroke();
+
+        // Lower Leg / Front Calf
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 14;
+        ctx.beginPath();
+        ctx.moveTo(frontKneeX, frontKneeY);
+        ctx.lineTo(frontFootX, frontFootY - 6);
+        ctx.stroke();
+
+        // Front Fencing Shoe (Pointing straight at adversary)
+        ctx.fillStyle = "#0f172a";
+        ctx.beginPath();
+        ctx.moveTo(frontFootX - 12, frontFootY - 8);
+        ctx.lineTo(frontFootX + 28, frontFootY - 8);
+        ctx.lineTo(frontFootX + 32, frontFootY - 1);
+        ctx.lineTo(frontFootX - 12, frontFootY - 1);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#38bdf8";
+        ctx.fillRect(frontFootX - 10, frontFootY - 2, 40, 3); // Shoe outsole
+
+        // 5. Torso & Fencing Jacket (Plastron)
+        const spineAngle = 0.04;
+        const chestX = rootX + 4 + (squatT * 3);
+        const chestY = hipY - 65;
+
+        // Fencing jacket body
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "#94a3b8";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(rootX - 18, hipY + 12);
+        ctx.lineTo(rootX + 26, hipY + 12);
+        ctx.lineTo(chestX + 24, chestY);
+        ctx.lineTo(chestX - 22, chestY);
+        ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
-        ctx.lineWidth = 1.5;
+        // Tournament plastron / harness line
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.45)";
+        ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(chestX + 6, chestY - 34);
-        ctx.lineTo(chestX + 6, chestY - 14);
+        ctx.moveTo(chestX - 14, chestY + 6);
+        ctx.lineTo(rootX + 16, hipY + 10);
         ctx.stroke();
 
-        ctx.strokeStyle = "#f8fafc";
-        ctx.lineWidth = 5;
-        const elbowX = chestX + 28;
-        const elbowY = chestY + 12;
-        const handX = chestX + 65;
-        const handY = chestY - 5;
+        // 6. Non-Sword Trailing Arm (High Counter-Balance Arc)
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 8;
+        const rearShoulderX = chestX - 18;
+        const rearShoulderY = chestY + 6;
+        const rearElbowX = rearShoulderX - 28;
+        const rearElbowY = rearShoulderY - 26;
+        const rearHandX = rearElbowX + 6;
+        const rearHandY = rearElbowY - 34;
 
         ctx.beginPath();
-        ctx.moveTo(chestX + 10, chestY - 10);
-        ctx.lineTo(elbowX, elbowY);
-        ctx.lineTo(handX, handY);
+        ctx.moveTo(rearShoulderX, rearShoulderY);
+        ctx.lineTo(rearElbowX, rearElbowY);
+        ctx.lineTo(rearHandX, rearHandY);
         ctx.stroke();
 
-        ctx.strokeStyle = "#e2e8f0";
+        // Trailing hand
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(rearHandX, rearHandY, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 7. Head, Collar & Fencing Mask
+        const headCenterX = chestX + 2;
+        const headCenterY = chestY - 34;
+
+        // White neck bib (Protective collar)
+        ctx.fillStyle = "#e2e8f0";
+        ctx.beginPath();
+        ctx.moveTo(headCenterX - 14, headCenterY + 14);
+        ctx.lineTo(headCenterX + 14, headCenterY + 14);
+        ctx.lineTo(headCenterX + 18, headCenterY + 28);
+        ctx.lineTo(headCenterX - 18, headCenterY + 28);
+        ctx.closePath();
+        ctx.fill();
+
+        // Fencing mask oval base
+        ctx.save();
+        ctx.translate(headCenterX, headCenterY);
+        ctx.rotate(0.08); // Slight forward gaze angle
+
+        ctx.fillStyle = "#0f172a";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 19, 26, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Stainless wire mesh pattern inside mask
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.3)";
+        ctx.lineWidth = 1;
+        for (let gridX = -14; gridX <= 14; gridX += 4) {
+            ctx.beginPath();
+            ctx.moveTo(gridX, -22);
+            ctx.lineTo(gridX, 22);
+            ctx.stroke();
+        }
+        for (let gridY = -20; gridY <= 20; gridY += 4) {
+            ctx.beginPath();
+            ctx.moveTo(-15, gridY);
+            ctx.lineTo(15, gridY);
+            ctx.stroke();
+        }
+
+        // Mask outer protective trim & gloss highlight
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 19, 26, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(handX, handY);
-        ctx.lineTo(handX + 110, handY - 12);
+        ctx.arc(6, -8, 12, -Math.PI / 3, Math.PI / 4);
+        ctx.stroke();
+        ctx.restore();
+
+        // 8. Lead Sword Arm & Foil En Garde
+        const leadShoulderX = chestX + 18;
+        const leadShoulderY = chestY + 8;
+        const leadElbowX = leadShoulderX + 32;
+        const leadElbowY = leadShoulderY + 28 - (squatT * 6);
+        const leadHandX = leadElbowX + 38;
+        const leadHandY = leadElbowY - 14;
+
+        // Glove and forearm
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(leadShoulderX, leadShoulderY);
+        ctx.lineTo(leadElbowX, leadElbowY);
+        ctx.lineTo(leadHandX, leadHandY);
         ctx.stroke();
 
-        ctx.strokeStyle = "#94a3b8";
+        // Glove Cuff (Manchette)
+        ctx.strokeStyle = "#38bdf8";
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(chestX - 10, chestY - 10);
-        ctx.lineTo(chestX - 35, chestY - 25);
-        ctx.lineTo(chestX - 30, chestY - 50);
+        ctx.moveTo(leadHandX - 10, leadHandY - 4);
+        ctx.lineTo(leadHandX - 4, leadHandY + 8);
         ctx.stroke();
 
+        // Foil Bell Guard (Coquille)
+        ctx.save();
+        const guardGrad = ctx.createRadialGradient(leadHandX, leadHandY, 2, leadHandX, leadHandY, 14);
+        guardGrad.addColorStop(0, "#ffffff");
+        guardGrad.addColorStop(0.5, "#94a3b8");
+        guardGrad.addColorStop(1, "#334155");
+        ctx.fillStyle = guardGrad;
+        ctx.strokeStyle = "#e2e8f0";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(leadHandX, leadHandY, 8, 16, -0.3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Steel Foil Blade
+        const bladeTipX = leadHandX + 160;
+        const bladeTipY = leadHandY - 12;
+
+        ctx.strokeStyle = "#f8fafc";
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(leadHandX + 4, leadHandY);
+        ctx.lineTo(bladeTipX, bladeTipY);
+        ctx.stroke();
+
+        // Rubber Foil Tip Button (Pointe d'arrêt)
+        ctx.fillStyle = "#ef4444";
+        ctx.beginPath();
+        ctx.arc(bladeTipX, bladeTipY, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
         ctx.restore();
     }
 
@@ -237,9 +459,9 @@
         const { x, y, r, clicked, label } = targetReticle;
 
         ctx.strokeStyle = clicked ? "#22c55e" : "#ef4444";
-        ctx.fillStyle = clicked ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.15)";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 4]);
+        ctx.fillStyle = clicked ? "rgba(34, 197, 94, 0.22)" : "rgba(239, 68, 68, 0.16)";
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 5]);
 
         ctx.beginPath();
         ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -248,9 +470,9 @@
 
         ctx.setLineDash([]);
         ctx.fillStyle = clicked ? "#86efac" : "#fca5a5";
-        ctx.font = "bold 12px Mukta, sans-serif";
+        ctx.font = "bold 13px Mukta, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(clicked ? "✓ बरोबर" : label, x, y - r - 6);
+        ctx.fillText(clicked ? "✓ उत्तम (अचूक)" : label, x, y - r - 8);
 
         ctx.restore();
     }
