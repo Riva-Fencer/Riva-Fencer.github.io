@@ -16,7 +16,7 @@
     --dock-bg: rgba(15, 23, 42, 0.88);
     --border-subtle: rgba(255, 255, 255, 0.08);
     --accent-cyan: #38bdf8;
-    --accent-glow: rgba(56, 189, 248, 0.12);
+    --accent-glow: rgba(56, 189, 248, 0.14);
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --font-stack: 'Plus Jakarta Sans', 'Mukta', -apple-system, sans-serif;
@@ -132,7 +132,7 @@ html, body {
     color: var(--text-main);
 }
 
-/* Canvas Area */
+/* Canvas Dynamic Stage */
 .canvas-stage {
     flex: 1 1 0;
     min-height: 0;
@@ -148,15 +148,11 @@ html, body {
 canvas {
     width: 100% !important;
     height: 100% !important;
-    max-width: 100%;
-    max-height: 100%;
-    aspect-ratio: 820 / 440;
-    background: radial-gradient(circle at 50% 40%, #131b2e 0%, #060911 100%);
-    border: 1px solid var(--border-subtle);
-    border-radius: 14px;
     display: block;
     touch-action: none;
-    object-fit: contain;
+    border-radius: 16px;
+    border: 1px solid var(--border-subtle);
+    background: radial-gradient(circle at 50% 40%, #131b2e 0%, #060911 100%);
 }
 
 .speed-overlay-pill {
@@ -176,7 +172,7 @@ canvas {
     z-index: 10;
 }
 
-/* Coaching Instruction Pill */
+/* Coaching Status Pill */
 .coach-panel {
     flex-shrink: 0;
     display: flex;
@@ -193,7 +189,7 @@ canvas {
     background: var(--accent-glow);
     padding: 4px 14px;
     border-radius: 999px;
-    border: 1px solid rgba(56, 189, 248, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.22);
 }
 
 .hint-subtext {
@@ -203,7 +199,7 @@ canvas {
     margin-top: 2px;
 }
 
-/* Control Elements */
+/* Base Controls Structure */
 .controls-dock {
     background: var(--dock-bg);
     border: 1px solid var(--border-subtle);
@@ -269,7 +265,7 @@ canvas {
 }
 
 /* ==========================================================================
-   PORTRAIT MODE (Vertical Flow - Fits on Cold Launch)
+   PORTRAIT MODE (Vertical Flow - Instant Cold Launch Fit)
    ========================================================================== */
 @media (orientation: portrait) {
     .drill-viewport {
@@ -328,7 +324,7 @@ canvas {
 }
 
 /* ==========================================================================
-   LANDSCAPE MODE (Arena Canvas + 64px Side Rail)
+   LANDSCAPE MODE (Full Arena Canvas + 64px Side Rail)
    ========================================================================== */
 @media (orientation: landscape) {
     .drill-viewport {
