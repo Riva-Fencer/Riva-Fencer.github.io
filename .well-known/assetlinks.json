@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "io.github.riva_fencer.twa",
-        "sha256_cert_fingerprints": ["87:FA:30:B9:5B:D7:34:2E:1E:3F:4A:18:27:60:D7:45:C9:11:B3:29:81:68:E5:14:C3:E2:E0:E9:D3:A5:DA:F2"]
+        "sha256_cert_fingerprints": ["A1:0A:EC:57:E2:55:AE:DF:61:9D:2D:94:75:3B:3E:DC:78:E0:B5:80:01:4A:24:3E:7B:FC:65:36:6B:3C:5A:EB"]
       }
     }]
