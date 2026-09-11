@@ -7,248 +7,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        body {
-            margin: 0;
-            padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 16px);
-            background: #080c14;
-            color: #f8fafc;
-            font-family: 'Plus Jakarta Sans', 'Mukta', -apple-system, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            height: 100vh;
-            overflow: hidden;
-        }
-        .top-nav-bar {
-            width: 100%;
-            max-width: 520px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            flex-shrink: 0;
-        }
-        .nav-back-btn {
-            background: transparent;
-            border: none;
-            color: #94a3b8;
-            padding: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: color 0.15s ease;
-        }
-        .nav-back-btn:active {
-            transform: scale(0.95);
-            color: #ffffff;
-        }
-        #drill-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #f8fafc;
-            margin: 0;
-            letter-spacing: -0.2px;
-            flex: 1;
-            text-align: left;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        /* Top-Right Circular Countdown Timer */
-        .timer-badge-container {
-            position: relative;
-            width: 42px;
-            height: 42px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .timer-svg {
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-        .timer-circle-bg {
-            fill: none;
-            stroke: #1e293b;
-            stroke-width: 3.2;
-        }
-        .timer-circle-progress {
-            fill: none;
-            stroke: #38bdf8;
-            stroke-width: 3.2;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.25s linear;
-        }
-        #timer-number {
-            position: absolute;
-            font-size: 11.5px;
-            font-weight: 700;
-            color: #f8fafc;
-            letter-spacing: -0.5px;
-        }
-        /* Maximized Canvas Wrapper */
-        #canvas-wrapper {
-            width: 100%;
-            max-width: 520px;
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            margin: 8px 0;
-        }
-        canvas {
-            width: 100% !important;
-            height: 100% !important;
-            max-height: 58vh;
-            background: radial-gradient(circle at 50% 40%, #131b2e 0%, #080d17 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            display: block;
-            touch-action: none;
-        }
-        .speed-badge {
-            position: absolute;
-            top: 14px;
-            left: 14px;
-            background: rgba(15, 23, 42, 0.85);
-            border: 1px solid #38bdf8;
-            color: #38bdf8;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 999px;
-            backdrop-filter: blur(4px);
-            display: none;
-            pointer-events: none;
-            z-index: 10;
-        }
-        /* Status & Cue Section */
-        .info-panel {
-            width: 100%;
-            max-width: 520px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            flex-shrink: 0;
-            margin-bottom: 8px;
-        }
-        #status-box {
-            font-size: 14px;
-            font-weight: 700;
-            min-height: 36px;
-            color: #38bdf8;
-            text-align: center;
-            padding: 0 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.3;
-        }
-        .hint-caption {
-            font-size: 11.5px;
-            color: #64748b;
-            text-align: center;
-            margin-top: 2px;
-        }
-        /* Bottom Controls Bar */
-        .bottom-control-bar {
-            width: 100%;
-            max-width: 520px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            flex-shrink: 0;
-            padding-bottom: 4px;
-        }
-        .step-nav-btn {
-            flex: 1;
-            height: 52px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: #cbd5e1;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.12s ease;
-        }
-        .step-nav-btn:active, .step-nav-btn.holding {
-            transform: scale(0.96);
-            background: #1e293b;
-            border-color: #38bdf8;
-            color: #ffffff;
-        }
-        .step-nav-title {
-            font-size: 13.5px;
-            font-weight: 700;
-        }
-        .step-nav-sub {
-            font-size: 9.5px;
-            color: #64748b;
-            letter-spacing: 0.2px;
-        }
-        .step-nav-btn:active .step-nav-sub, .step-nav-btn.holding .step-nav-sub {
-            color: #38bdf8;
-        }
-        .media-cluster {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-        .media-icon-btn {
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: #94a3b8;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.12s ease;
-        }
-        .media-icon-btn:active {
-            transform: scale(0.94);
-            color: #ffffff;
-        }
-        .play-toggle-btn {
-            width: 56px;
-            height: 56px;
-            background: #f8fafc;
-            color: #080c14;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-            transition: transform 0.12s ease;
-        }
-        .play-toggle-btn:active {
-            transform: scale(0.95);
-        }
-    </style>
+    <!-- Link to the shared responsive stylesheet -->
+    <link rel="stylesheet" href="drill-style.css">
 </head>
 <body>
 
+<div class="drill-container">
+    <!-- Top Bar -->
     <nav class="top-nav-bar">
         <button class="nav-back-btn" onclick="location.href='index.html'" aria-label="Back">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -258,7 +23,6 @@
         </button>
         <h1 id="drill-title">१/८. पायांची अचूक 'L' पोझिशन</h1>
         
-        <!-- Animated Circular Countdown -->
         <div class="timer-badge-container">
             <svg class="timer-svg" viewBox="0 0 36 36">
                 <path class="timer-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
@@ -268,46 +32,48 @@
         </div>
     </nav>
 
+    <!-- Canvas Stage -->
     <div id="canvas-wrapper">
         <canvas id="fencingCanvas"></canvas>
         <div id="speedBadge" class="speed-badge"></div>
     </div>
 
+    <!-- Status Info -->
     <div class="info-panel">
         <div id="status-box">दोन्ही पावले जवळ जोडून ताठ उभे राहा</div>
         <div class="hint-caption">मागे दाबून धरा = स्लो-मोशन | पुढे दाबून धरा = फास्ट फॉरवर्ड</div>
     </div>
 
-    <!-- Navigation & Media Controls -->
+    <!-- Bottom Controls (Becomes Right Sidebar in Landscape) -->
     <div class="bottom-control-bar">
         <button class="step-nav-btn" id="btnPrev">
             <span class="step-nav-title">◀ मागे</span>
-            <span class="step-nav-sub">दाबून धरा: स्लो</span>
+            <span class="step-nav-sub">होल्ड: स्लो</span>
         </button>
 
         <div class="media-cluster">
             <button class="media-icon-btn" onclick="restartMasterTraining()" aria-label="Restart">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.19"/>
                 </svg>
             </button>
 
             <button class="play-toggle-btn" id="playToggleBtn" onclick="togglePause()" aria-label="Play / Pause">
-                <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
-                <svg id="pauseIcon" style="display: none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <svg id="pauseIcon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="4" width="4" height="16"></rect>
                     <rect x="14" y="4" width="4" height="16"></rect>
                 </svg>
             </button>
 
             <button class="media-icon-btn" id="audioToggleBtn" onclick="toggleAudio()" aria-label="Toggle Audio">
-                <svg id="audioOnIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="audioOnIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                 </svg>
-                <svg id="audioMuteIcon" style="display: none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg id="audioMuteIcon" style="display: none;" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                     <line x1="23" y1="9" x2="17" y2="15"></line>
                     <line x1="17" y1="9" x2="23" y2="15"></line>
@@ -317,9 +83,10 @@
 
         <button class="step-nav-btn" id="btnNext">
             <span class="step-nav-title">पुढे ▶</span>
-            <span class="step-nav-sub">दाबून धरा: फास्ट</span>
+            <span class="step-nav-sub">होल्ड: फास्ट</span>
         </button>
     </div>
+</div>
 
 <script>
 (function() {
@@ -612,7 +379,6 @@ function updateDrillStateMachine(currentTimeMs) {
     const config = drillTimelineConfigs[drillIdx];
     if (!config) return;
 
-    // Countdown ring updates
     const remainingSeconds = Math.max(0, Math.ceil((DRILL_DURATION - localTime) / 1000));
     timerNumber.innerText = `${remainingSeconds}s`;
     const progressPercent = (localTime / DRILL_DURATION) * 100;
@@ -636,7 +402,6 @@ function updateDrillStateMachine(currentTimeMs) {
     }
 }
 
-// Interactive Speed Controls (Hold to Fast/Slow)
 let holdTimer = null;
 let isHolding = false;
 
@@ -668,7 +433,6 @@ btnPrev.addEventListener('pointerup', () => {
         setSpeedUI("", false);
         isHolding = false;
     } else {
-        // Quick tap: jump back 1 drill
         switchDrill(Math.max(0, currentDrill - 1));
     }
 });
@@ -699,7 +463,6 @@ btnNext.addEventListener('pointerup', () => {
         setSpeedUI("", false);
         isHolding = false;
     } else {
-        // Quick tap: jump forward 1 drill
         switchDrill(Math.min(drillTimelineConfigs.length - 1, currentDrill + 1));
     }
 });
@@ -771,7 +534,6 @@ function drawAnatomicalContouredLeg(hx, hy, kx, ky, ax, ay, isFront) {
     ctx.beginPath();
     ctx.arc(kx, ky, 3.2, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.restore();
 }
 
