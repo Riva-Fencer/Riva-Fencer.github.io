@@ -1,496 +1,681 @@
 /**
  * Riva Fencer - Cartridge 001
- * Drill 1: पायांची अचूक 'L' पोझिशन व तोल (L-Stance & Dynamic En Garde)
+ * Exact Original Biomechanics & IK from Riva Drill 1.html
  */
 (function () {
-    let ctx, W, H, groundY;
+    let ctx, BASE_WIDTH = 820, BASE_HEIGHT = 420, GROUND_Y = 312;
     let animFrameId = null;
     let isPaused = true;
-    let startTime = 0;
-    let pausedAt = 0;
-    const DURATION = 30;
+    let effectiveElapsed = 0;
+    let lastFrameTime = performance.now();
+    const DRILL_DURATION = 30000;
 
-    let currentPhase = -1;
-    let targetReticle = null;
+    // -------------------------------------------------------------
+    // WEAKNESS 1: SPATIAL HIT-TESTING & ERROR RETICLE REGISTRY
+    // -------------------------------------------------------------
+    let activeErrorZones = [];
+    let visualRipples = [];
 
-    // Timeline configuration
-    const PHASES = [
-        {
-            start: 0,
-            end: 9,
-            text: "पायांमध्ये ९० अंशाचा अचूक 'L' आकार तयार करा",
-            cue: "शाब्बास रीवा, पायांमध्ये नव्वद अंशाचा अचूक एल आकार तयार करा!",
-            target: { x: 390, y: 312, r: 32, label: "टाच जुळवा (९०°)" }
-        },
-        {
-            start: 9,
-            end: 18,
-            text: "गुडघे वाकवून खोल एन गार्डे पोझिशन घ्या",
-            cue: "गुडघे वाकवा, पाठीचा कणा ताठ ठेवून एन गार्डे पोझिशन घ्या!",
-            target: { x: 470, y: 245, r: 28, label: "गुडघा वाकवा" }
-        },
-        {
-            start: 18,
-            end: 30,
-            text: "तोल ५०-५० मध्यभागी ठेवा आणि स्थिर राहा",
-            cue: "उत्कृष्ट! शरीराचा तोल मध्यभागी ठेवून स्थिर राहा.",
-            target: null
+    function registerErrorZone(id, x, y, radius, onCorrectCallback) {
+        activeErrorZones.push({ id, x, y, radius, onCorrect: onCorrectCallback });
+    }
+
+    function clearErrorZones() {
+        activeErrorZones = [];
+    }
+
+    function spawnSuccessRipple(x, y) {
+        visualRipples.push({ x, y, radius: 8, maxRadius: 36, alpha: 1.0, color: '#22c55e' });
+    }
+
+    function spawnMissNotice(x, y) {
+        visualRipples.push({ x, y, radius: 4, maxRadius: 20, alpha: 0.8, color: '#ef4444' });
+    }
+
+    function updateAndDrawRipples() {
+        for (let i = visualRipples.length - 1; i >= 0; i--) {
+            const r = visualRipples[i];
+            r.radius += 1.8;
+            r.alpha -= 0.04;
+            if (r.alpha <= 0) {
+                visualRipples.splice(i, 1);
+                continue;
+            }
+            ctx.save();
+            ctx.strokeStyle = r.color;
+            ctx.globalAlpha = r.alpha;
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
         }
+    }
+
+    function drawActiveErrorReticles() {
+        const pulse = Math.sin(performance.now() * 0.008) * 3.5;
+        activeErrorZones.forEach(zone => {
+            ctx.save();
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 2.0;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.arc(zone.x, zone.y, zone.radius + pulse, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = 'rgba(239, 68, 68, 0.2)';
+            ctx.fill();
+
+            ctx.fillStyle = '#fca5a5';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("येथे टॅप करा", zone.x, zone.y - zone.radius - 6);
+            ctx.restore();
+        });
+    }
+
+    function resolveErrorCorrectionTap(clickX, clickY) {
+        let corrected = false;
+        for (let i = activeErrorZones.length - 1; i >= 0; i--) {
+            const zone = activeErrorZones[i];
+            const dist = Math.hypot(clickX - zone.x, clickY - zone.y);
+            if (dist <= zone.radius) {
+                spawnSuccessRipple(zone.x, zone.y);
+                zone.onCorrect();
+                corrected = true;
+                break;
+            }
+        }
+        if (!corrected && activeErrorZones.length > 0) {
+            spawnMissNotice(clickX, clickY);
+        }
+    }
+
+    // -------------------------------------------------------------
+    // WEAKNESS 2: HIT-STOP & DYNAMIC SCREEN SHAKE ENGINE
+    // -------------------------------------------------------------
+    let hitStopUntil = 0;
+    let screenShakeRemaining = 0;
+    let screenShakeMagnitude = 0;
+    let wasInContactPreviousFrame = false;
+
+    function triggerHitStop(freezeMs, shakeIntensity) {
+        const now = performance.now();
+        hitStopUntil = now + freezeMs;
+        screenShakeRemaining = freezeMs;
+        screenShakeMagnitude = shakeIntensity;
+        if ('vibrate' in navigator) {
+            try { navigator.vibrate(shakeIntensity > 3 ? [35, 25, 35] : 25); } catch (e) {}
+        }
+    }
+
+    function applyCameraTransform() {
+        ctx.save();
+        if (screenShakeRemaining > 0) {
+            const shakeX = (Math.random() - 0.5) * screenShakeMagnitude * 2;
+            const shakeY = (Math.random() - 0.5) * screenShakeMagnitude * 2;
+            ctx.translate(shakeX, shakeY);
+            screenShakeRemaining -= 16.6;
+            if (screenShakeRemaining <= 0) screenShakeMagnitude = 0;
+        }
+    }
+
+    function restoreCameraTransform() {
+        ctx.restore();
+    }
+
+    // -------------------------------------------------------------
+    // INVERSE KINEMATICS & ANATOMICAL RENDERING (YOUR ORIGINAL CODE)
+    // -------------------------------------------------------------
+    function solveLegIK(hx, hy, ax, ay, l1, l2, bendForward = true) {
+        const dx = ax - hx;
+        const dy = ay - hy;
+        let d = Math.hypot(dx, dy);
+        d = Math.min(d, l1 + l2 - 0.001);
+        d = Math.max(d, Math.abs(l1 - l2) + 0.001);
+
+        const baseAngle = Math.atan2(dy, dx);
+        const cosA = (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d);
+        const offset = Math.acos(Math.max(-1, Math.min(1, cosA)));
+        const angle = bendForward ? (baseAngle - offset) : (baseAngle + offset);
+
+        return {
+            kx: hx + Math.cos(angle) * l1,
+            ky: hy + Math.sin(angle) * l1
+        };
+    }
+
+    function drawAnatomicalContouredLeg(hx, hy, kx, ky, ax, ay, isFront) {
+        ctx.save();
+        const baseColor = isFront ? '#f8fafc' : '#cbd5e1';
+        const shadeColor = isFront ? '#cbd5e1' : '#94a3b8';
+        const seamColor = isFront ? '#94a3b8' : '#64748b';
+
+        // 1. Femur / Thigh with Quadriceps Muscle Form
+        const fAngle = Math.atan2(ky - hy, kx - hx);
+        const fPerp = fAngle + Math.PI / 2;
+        const qMidX = (hx + kx) * 0.5;
+        const qMidY = (hy + ky) * 0.5;
+        const qBulge = isFront ? 4.2 : 2.5;
+
+        ctx.fillStyle = baseColor;
+        ctx.strokeStyle = seamColor;
+        ctx.lineWidth = 1.2;
+
+        ctx.beginPath();
+        ctx.moveTo(hx - Math.cos(fPerp) * 6.5, hy - Math.sin(fPerp) * 6.5);
+        ctx.quadraticCurveTo(qMidX + Math.cos(fPerp) * (7 + qBulge), qMidY + Math.sin(fPerp) * (7 + qBulge), kx + Math.cos(fPerp) * 5.0, ky + Math.sin(fPerp) * 5.0);
+        ctx.lineTo(kx - Math.cos(fPerp) * 4.5, ky - Math.sin(fPerp) * 4.5);
+        ctx.quadraticCurveTo(qMidX - Math.cos(fPerp) * 5.0, qMidY - Math.sin(fPerp) * 5.0, hx + Math.cos(fPerp) * 6.0, hy + Math.sin(fPerp) * 6.0);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        // 2. Tibia / Calf with Gastrocnemius Contour
+        const tAngle = Math.atan2(ay - ky, ax - kx);
+        const tPerp = tAngle + Math.PI / 2;
+        const cMidX = (kx + ax) * 0.5;
+        const cMidY = (ky + ay) * 0.5;
+        const cBulge = isFront ? -4.5 : -2.8;
+
+        ctx.beginPath();
+        ctx.moveTo(kx + Math.cos(tPerp) * 4.8, ky + Math.sin(tPerp) * 4.8);
+        ctx.quadraticCurveTo(cMidX + Math.cos(tPerp) * (5.5 + cBulge), cMidY + Math.sin(tPerp) * (5.5 + cBulge), ax + Math.cos(tPerp) * 3.5, ay + Math.sin(tPerp) * 3.5);
+        ctx.lineTo(ax - Math.cos(tPerp) * 3.2, ay - Math.sin(tPerp) * 3.2);
+        ctx.quadraticCurveTo(cMidX - Math.cos(tPerp) * 4.5, cMidY - Math.sin(tPerp) * 4.5, kx - Math.cos(tPerp) * 4.2, ky - Math.sin(tPerp) * 4.2);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        // 3. Patella Cap
+        ctx.fillStyle = shadeColor;
+        ctx.beginPath();
+        ctx.arc(kx, ky, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawAuthenticShoe(x, y, tiltDeg, isFront, isTurned90, facingLeft = false) {
+        ctx.save();
+        ctx.translate(x, y);
+        if (facingLeft) ctx.scale(-1, 1);
+        ctx.rotate((tiltDeg * Math.PI) / 180);
+
+        ctx.fillStyle = '#0284c7';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.1;
+
+        if (isTurned90) {
+            ctx.beginPath();
+            ctx.roundRect(-7, -8, 14, 8, [3, 3, 2, 2]);
+            ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(-7, -2.5, 14, 2.5);
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(-8, -8);
+            ctx.lineTo(5, -8);
+            ctx.quadraticCurveTo(13, -4.5, 14, -1);
+            ctx.lineTo(-8, -1);
+            ctx.quadraticCurveTo(-10, -4.5, -8, -8);
+            ctx.closePath();
+            ctx.fill(); ctx.stroke();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(-9, -2.5, 23, 2.5, [1, 1, 1, 1]);
+            ctx.fill();
+
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(-2, -7); ctx.lineTo(2, -4);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    function drawFoilLameVest(pelvisX, pelvisY, shoulderX, shoulderY, isOpponent, isError = false) {
+        ctx.save();
+        ctx.fillStyle = isError ? '#fca5a5' : (isOpponent ? '#475569' : '#0284c7');
+        ctx.strokeStyle = isError ? '#ef4444' : '#38bdf8';
+        ctx.lineWidth = 1.4;
+
+        ctx.beginPath();
+        ctx.moveTo(shoulderX - 10, shoulderY + 8);
+        ctx.lineTo(shoulderX + 10, shoulderY + 8);
+        ctx.lineTo(pelvisX + 8, pelvisY);
+        ctx.quadraticCurveTo(pelvisX, pelvisY + 5, pelvisX - 8, pelvisY);
+        ctx.lineTo(shoulderX - 10, shoulderY + 8);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(shoulderX - 4, shoulderY + 9); ctx.lineTo(pelvisX - 3, pelvisY);
+        ctx.moveTo(shoulderX + 4, shoulderY + 9); ctx.lineTo(pelvisX + 3, pelvisY);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawAuthenticMask(headX, headY, gazeTargetX, gazeTargetY, isOpponent, isError = false) {
+        ctx.save();
+        ctx.fillStyle = isOpponent ? '#334155' : '#0284c7';
+        ctx.strokeStyle = isError ? '#ef4444' : '#64748b';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(headX - 10, headY + 8);
+        ctx.quadraticCurveTo(headX + (isOpponent ? -12 : 12), headY + 16, headX + (isOpponent ? -7 : 7), headY + 22);
+        ctx.lineTo(headX - (isOpponent ? -2 : 2), headY + 22);
+        ctx.quadraticCurveTo(headX + 2, headY + 15, headX + 10, headY + 8);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = '#0b111e';
+        ctx.strokeStyle = isError ? '#ef4444' : '#38bdf8';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.ellipse(headX, headY, 12.5, 15.5, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+        ctx.lineWidth = 0.8;
+        for (let i = -8; i <= 8; i += 3.5) {
+            ctx.beginPath();
+            ctx.moveTo(headX + i, headY - 11);
+            ctx.lineTo(headX + i, headY + 11);
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.arc(headX, headY, 13, Math.PI * 0.25, Math.PI * 0.75);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function calculateEulerBladeBuckle(handX, handY, angleDeg, targetX, targetY, isFlankHit) {
+        const bladeLen = 104;
+        const rad = (angleDeg * Math.PI) / 180;
+        const undeflectedTipX = handX + Math.cos(rad) * bladeLen;
+        const undeflectedTipY = handY + Math.sin(rad) * bladeLen;
+
+        if (targetX <= 0 || undeflectedTipX < targetX) {
+            return {
+                isBent: false,
+                p0: { x: handX, y: handY },
+                tip: { x: undeflectedTipX, y: undeflectedTipY }
+            };
+        }
+
+        const tipX = targetX;
+        const tipY = targetY;
+        const penetration = undeflectedTipX - targetX;
+
+        const nodeX = handX + (bladeLen * 0.68) * Math.cos(rad);
+        const nodeY = handY + (bladeLen * 0.68) * Math.sin(rad);
+
+        const normalAngle = rad + (isFlankHit ? (Math.PI / 2) : (-Math.PI / 2));
+        const buckleDepth = 10.0 + (penetration * 0.82);
+
+        const ctrlX = nodeX + Math.cos(normalAngle) * buckleDepth;
+        const ctrlY = nodeY + Math.sin(normalAngle) * buckleDepth;
+
+        return {
+            isBent: true,
+            p0: { x: handX, y: handY },
+            pCtrl: { x: ctrlX, y: ctrlY },
+            tip: { x: tipX, y: tipY }
+        };
+    }
+
+    function drawElectronicPointGlow(x, y) {
+        ctx.save();
+        const grad = ctx.createRadialGradient(x, y, 1, x, y, 12);
+        grad.addColorStop(0, 'rgba(34, 197, 94, 1.0)');
+        grad.addColorStop(0.45, 'rgba(74, 222, 128, 0.7)');
+        grad.addColorStop(1, 'rgba(34, 197, 94, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawAuthenticFoil(handX, handY, angleDeg, targetX, targetY, isFlankHit = false) {
+        const spine = calculateEulerBladeBuckle(handX, handY, angleDeg, targetX, targetY, isFlankHit);
+        const rad = (angleDeg * Math.PI) / 180;
+
+        ctx.save();
+        ctx.translate(handX, handY);
+        ctx.rotate(rad);
+        ctx.fillStyle = '#94a3b8';
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.1;
+
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 3.8, 10, 0, -Math.PI / 2, Math.PI / 2, true);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(-1.5, -6, 1.8, 12);
+        ctx.restore();
+
+        ctx.save();
+        ctx.lineCap = 'round';
+
+        if (spine.isBent) {
+            if (!wasInContactPreviousFrame) {
+                triggerHitStop(75, 4.2);
+            }
+            wasInContactPreviousFrame = true;
+
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.moveTo(spine.p0.x, spine.p0.y);
+            ctx.quadraticCurveTo(spine.pCtrl.x, spine.pCtrl.y, spine.tip.x, spine.tip.y);
+            ctx.stroke();
+
+            drawElectronicPointGlow(spine.tip.x, spine.tip.y);
+        } else {
+            wasInContactPreviousFrame = false;
+
+            const midX = spine.p0.x + (spine.tip.x - spine.p0.x) * 0.55;
+            const midY = spine.p0.y + (spine.tip.y - spine.p0.y) * 0.55;
+
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.moveTo(spine.p0.x, spine.p0.y);
+            ctx.lineTo(midX, midY);
+            ctx.stroke();
+
+            ctx.lineWidth = 1.3;
+            ctx.beginPath();
+            ctx.moveTo(midX, midY);
+            ctx.lineTo(spine.tip.x, spine.tip.y);
+            ctx.stroke();
+
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(spine.tip.x, spine.tip.y, 2.6, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    function drawFencingStrip(groundY) {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, groundY, BASE_WIDTH, BASE_HEIGHT - groundY);
+        ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, groundY); ctx.lineTo(BASE_WIDTH, groundY); ctx.stroke();
+        ctx.fillStyle = '#334155';
+        for (let x = 40; x < BASE_WIDTH; x += 40) ctx.fillRect(x, groundY + 1, 2, 8);
+    }
+
+    function drawU10Fencer(cfg) {
+        const {
+            pelvisX, pelvisY,
+            frontFootX, frontFootY, frontTilt = 0,
+            rearFootX, rearFootY, rearTilt = 0,
+            rearFootTurned90 = true,
+            torsoIncline = 0,
+            armState = 'enGarde',
+            armExtension = 0,
+            bladeAngle = -5,
+            targetSurfaceX = 0,
+            targetSurfaceY = 0,
+            isFlankHit = false,
+            isError = false,
+            rearArmActiveLunge = 0,
+            gazeTargetX = 0,
+            gazeTargetY = 0
+        } = cfg;
+
+        const femur = 46;
+        const tibia = 43;
+
+        // 1. REAR LEG IK
+        const rearHipX = pelvisX - 5;
+        const rearHipY = pelvisY;
+        const rearAnkleY = rearFootY - 6;
+        const rearIK = solveLegIK(rearHipX, rearHipY, rearFootX, rearAnkleY, femur, tibia, false);
+        drawAnatomicalContouredLeg(rearHipX, rearHipY, rearIK.kx, rearIK.ky, rearFootX, rearAnkleY, false);
+        drawAuthenticShoe(rearFootX, rearFootY, rearTilt, false, rearFootTurned90, false);
+
+        // 2. FRONT LEG IK
+        const frontHipX = pelvisX + 5;
+        const frontHipY = pelvisY;
+        const frontAnkleY = frontFootY - 6;
+        const frontIK = solveLegIK(frontHipX, frontHipY, frontFootX, frontAnkleY, femur, tibia, true);
+        drawAnatomicalContouredLeg(frontHipX, frontHipY, frontIK.kx, frontIK.ky, frontFootX, frontAnkleY, true);
+        drawAuthenticShoe(frontFootX, frontFootY, frontTilt, true, false, false);
+
+        // 3. TORSO & CONDUCTIVE LAMÉ
+        const shoulderX = pelvisX + 3 + (torsoIncline * 10);
+        const shoulderY = pelvisY - 50;
+
+        ctx.save();
+        ctx.fillStyle = isError ? '#fca5a5' : '#f1f5f9';
+        ctx.beginPath();
+        ctx.roundRect(pelvisX - 9, pelvisY - 4, 18, 9, [2, 2, 3, 3]);
+        ctx.fill();
+        ctx.restore();
+
+        drawFoilLameVest(pelvisX, pelvisY, shoulderX, shoulderY, false, isError);
+
+        // 4. COUNTERBALANCE REAR ARM
+        const bShoulderX = shoulderX - 7;
+        const bShoulderY = shoulderY + 8;
+        ctx.save();
+        ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 3.6; ctx.lineCap = 'round';
+
+        if (rearArmActiveLunge > 0) {
+            const snap = rearArmActiveLunge;
+            const bElbowX = (1 - snap) * (bShoulderX - 12) + snap * (bShoulderX - 24);
+            const bElbowY = (1 - snap) * (bShoulderY - 12) + snap * (bShoulderY + 8);
+            const bHandX = (1 - snap) * (bElbowX + 4) + snap * (bShoulderX - 42);
+            const bHandY = (1 - snap) * (bElbowY - 12) + snap * (bShoulderY + 18);
+
+            ctx.beginPath(); ctx.moveTo(bShoulderX, bShoulderY);
+            ctx.lineTo(bElbowX, bElbowY); ctx.lineTo(bHandX, bHandY); ctx.stroke();
+        } else {
+            const bElbowX = bShoulderX - 12;
+            const bElbowY = bShoulderY - 12;
+            const bHandX = bElbowX + 4;
+            const bHandY = bElbowY - 12;
+
+            ctx.beginPath(); ctx.moveTo(bShoulderX, bShoulderY);
+            ctx.lineTo(bElbowX, bElbowY); ctx.lineTo(bHandX, bHandY); ctx.stroke();
+        }
+        ctx.restore();
+
+        // 5. HEAD & AUTHENTIC MASK
+        const headX = shoulderX + 3;
+        const headY = shoulderY - 18;
+        drawAuthenticMask(headX, headY, gazeTargetX, gazeTargetY, false, isError);
+
+        // 6. WEAPON ARM & FOIL
+        const fShoulderX = shoulderX + 7;
+        const fShoulderY = shoulderY + 10;
+
+        let handX, handY;
+        ctx.save();
+        ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 3.8; ctx.lineCap = 'round';
+
+        if (armState === 'enGarde') {
+            handX = fShoulderX + 24;
+            handY = fShoulderY + 2;
+            const elbowX = fShoulderX + 12;
+            const elbowY = fShoulderY + 12;
+
+            ctx.beginPath(); ctx.moveTo(fShoulderX, fShoulderY);
+            ctx.lineTo(elbowX, elbowY); ctx.lineTo(handX, handY); ctx.stroke();
+            ctx.restore();
+            drawAuthenticFoil(handX, handY, bladeAngle, 0, 0, false);
+        } else {
+            const maxReach = 44;
+            const currentReach = 24 + (armExtension * (maxReach - 24));
+            handX = fShoulderX + currentReach;
+            handY = fShoulderY - (armExtension * 3.0);
+            const elbowX = fShoulderX + (currentReach * 0.52);
+            const elbowY = fShoulderY + (12 * (1 - armExtension));
+
+            ctx.beginPath(); ctx.moveTo(fShoulderX, fShoulderY);
+            ctx.lineTo(elbowX, elbowY); ctx.lineTo(handX, handY); ctx.stroke();
+            ctx.restore();
+            drawAuthenticFoil(handX, handY, bladeAngle, targetSurfaceX, targetSurfaceY, isFlankHit);
+        }
+    }
+
+    // -------------------------------------------------------------
+    // EXACT DRILL 1 ANIMATION ROUTINE
+    // -------------------------------------------------------------
+    const PHASES = [
+        { startTime: 0, marathiText: "दोन्ही पावले जवळ ठेवा आणि सरळ उभे राहा.", englishText: "Stand upright with both feet together.", status: "१. दोन्ही पावले जवळ जोडून ताठ उभे राहा. (लाल त्रुटीवर टॅप करा)", color: "#ef4444" },
+        { startTime: 9000, marathiText: "मागचा पाय नव्वद अंशात फिरवून एल आकार बनवा.", englishText: "Turn the rear foot 90 degrees to form an L.", status: "२. पुढचा पाय सरळ ठेवून, मागचा पाय ९० अंशात फिरवा ('L' आकार)!", color: "#facc15" },
+        { startTime: 18000, marathiText: "शाब्बास रीवा, अचूक एल पोझिशन तयार झाली आहे!", englishText: "Excellent Riva, perfect L-stance base achieved!", status: "✅ अचूक 'L' कोन आणि खांद्याइतके नैसर्गिक अंतर पूर्ण!", color: "#22c55e" }
     ];
 
-    function init(canvasCtx, baseWidth, baseHeight, baseGroundY) {
+    let currentPhaseIdx = -1;
+
+    function renderDrill1_LStance(t) {
+        drawFencingStrip(GROUND_Y);
+        const fencerX = 410;
+        const phase = t < 9000 ? 0 : (t < 18000 ? 1 : 2);
+        let stanceWidth = 14;
+        let rearTurned = false;
+
+        clearErrorZones();
+
+        if (phase === 0) {
+            stanceWidth = 14; rearTurned = false;
+            registerErrorZone('d1_foot', fencerX - 7, GROUND_Y - 8, 24, () => {
+                effectiveElapsed = 9005;
+            });
+        } else if (phase === 1) {
+            stanceWidth = 14; rearTurned = true;
+        } else {
+            stanceWidth = 48; rearTurned = true;
+        }
+
+        drawU10Fencer({
+            pelvisX: fencerX, pelvisY: 242,
+            frontFootX: fencerX + (stanceWidth / 2), frontFootY: GROUND_Y,
+            rearFootX: fencerX - (stanceWidth / 2), rearFootY: GROUND_Y,
+            rearFootTurned90: rearTurned,
+            isError: phase === 0
+        });
+    }
+
+    function updateStateMachine(t) {
+        let targetIdx = 0;
+        for (let i = PHASES.length - 1; i >= 0; i--) {
+            if (t >= PHASES[i].startTime) {
+                targetIdx = i;
+                break;
+            }
+        }
+
+        if (currentPhaseIdx !== targetIdx) {
+            currentPhaseIdx = targetIdx;
+            const p = PHASES[targetIdx];
+            const statusBox = document.getElementById('status-box');
+            if (statusBox) {
+                statusBox.innerText = typeof getPersonalizedText === 'function' ? getPersonalizedText(p.status) : p.status;
+                statusBox.style.color = p.color;
+            }
+            if (typeof speakCoachingCue === 'function') {
+                speakCoachingCue(p.marathiText, p.englishText);
+            }
+        }
+
+        // Timer HUD in Master Shell
+        const remainingSec = Math.max(0, Math.ceil((DRILL_DURATION - t) / 1000));
+        const timerNum = document.getElementById('timer-number');
+        if (timerNum) timerNum.innerText = `${remainingSec}s`;
+
+        const timerProgress = document.getElementById('timerProgress');
+        if (timerProgress) {
+            const pct = Math.min(100, (t / DRILL_DURATION) * 100);
+            timerProgress.setAttribute('stroke-dashoffset', 100 - pct);
+        }
+    }
+
+    function loop() {
+        if (isPaused) return;
+
+        const now = performance.now();
+        const dt = now - lastFrameTime;
+        lastFrameTime = now;
+
+        if (now >= hitStopUntil) {
+            effectiveElapsed = (effectiveElapsed + dt) % DRILL_DURATION;
+            updateStateMachine(effectiveElapsed);
+        }
+
+        ctx.clearRect(0, 0, BASE_WIDTH, BASE_HEIGHT);
+        applyCameraTransform();
+
+        renderDrill1_LStance(effectiveElapsed);
+
+        drawActiveErrorReticles();
+        updateAndDrawRipples();
+        restoreCameraTransform();
+
+        animFrameId = requestAnimationFrame(loop);
+    }
+
+    // -------------------------------------------------------------
+    // CARTRIDGE PUBLIC API
+    // -------------------------------------------------------------
+    function init(canvasCtx, w, h, gY) {
         ctx = canvasCtx;
-        W = baseWidth;
-        H = baseHeight;
-        groundY = baseGroundY;
+        BASE_WIDTH = w;
+        BASE_HEIGHT = h;
+        GROUND_Y = gY;
         restart();
     }
 
     function restart() {
         if (animFrameId) cancelAnimationFrame(animFrameId);
-        startTime = performance.now();
-        pausedAt = 0;
+        effectiveElapsed = 0;
+        currentPhaseIdx = -1;
+        lastFrameTime = performance.now();
         isPaused = false;
-        currentPhase = -1;
-        targetReticle = null;
         loop();
     }
 
     function setPaused(paused) {
         if (isPaused === paused) return;
         isPaused = paused;
-        if (isPaused) {
-            pausedAt = performance.now() - startTime;
-            if (animFrameId) cancelAnimationFrame(animFrameId);
-        } else {
-            startTime = performance.now() - pausedAt;
+        if (!isPaused) {
+            lastFrameTime = performance.now();
             loop();
+        } else {
+            if (animFrameId) cancelAnimationFrame(animFrameId);
         }
     }
 
     function handleTap(clickX, clickY) {
-        if (!targetReticle || targetReticle.clicked) return;
-        const dx = clickX - targetReticle.x;
-        const dy = clickY - targetReticle.y;
-        if (Math.hypot(dx, dy) <= targetReticle.r * 1.5) {
-            targetReticle.clicked = true;
-            if (typeof speakCoachingCue === 'function') {
-                speakCoachingCue("अचूक! खूप छान.");
-            }
-        }
-    }
-
-    function easeInOutQuad(t) {
-        return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    }
-
-    function updateHUD(elapsedSec) {
-        const remaining = Math.max(0, Math.ceil(DURATION - elapsedSec));
-        const timerNum = document.getElementById('timer-number');
-        if (timerNum) timerNum.innerText = `${remaining}s`;
-
-        const timerProgress = document.getElementById('timerProgress');
-        if (timerProgress) {
-            const pct = Math.min(100, (elapsedSec / DURATION) * 100);
-            timerProgress.setAttribute('stroke-dashoffset', 100 - pct);
-        }
-
-        for (let i = 0; i < PHASES.length; i++) {
-            const p = PHASES[i];
-            if (elapsedSec >= p.start && elapsedSec < p.end) {
-                if (currentPhase !== i) {
-                    currentPhase = i;
-                    targetReticle = p.target ? { ...p.target, clicked: false } : null;
-                    const statusBox = document.getElementById('status-box');
-                    if (statusBox) statusBox.innerText = getPersonalizedText(p.text);
-                    if (typeof speakCoachingCue === 'function') speakCoachingCue(p.cue);
-                }
-                break;
-            }
-        }
-
-        if (elapsedSec >= DURATION && currentPhase !== 99) {
-            const statusBox = document.getElementById('status-box');
-            if (statusBox) statusBox.innerText = "सराव यशस्वीरीत्या पूर्ण! शाब्बास!";
-            if (typeof speakCoachingCue === 'function') {
-                speakCoachingCue("शाब्बास रीवा, अचूक पोझिशन! आजचा सराव पूर्ण झाला.");
-            }
-            currentPhase = 99;
-        }
-    }
-
-    function drawPiste() {
-        // High-tech dark metallic piste surface
-        const grad = ctx.createLinearGradient(0, groundY - 10, 0, H);
-        grad.addColorStop(0, "#0a1120");
-        grad.addColorStop(1, "#040711");
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, groundY, W, H - groundY);
-
-        // Strip borders with athletic cyan glow
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(30, groundY);
-        ctx.lineTo(W - 30, groundY);
-        ctx.stroke();
-
-        // Strip grid marks
-        for (let x = 70; x <= W - 70; x += 60) {
-            ctx.strokeStyle = "rgba(148, 163, 184, 0.15)";
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(x, groundY - 4);
-            ctx.lineTo(x, groundY + 8);
-            ctx.stroke();
-        }
-    }
-
-    function drawFencer(elapsedSec) {
-        // Compute smooth stance progression
-        let squatT = 0;
-        if (elapsedSec < 9) {
-            squatT = 0; // Standing upright in L-Stance
-        } else if (elapsedSec < 12) {
-            squatT = easeInOutQuad((elapsedSec - 9) / 3); // Sinking smoothly into En Garde
-        } else {
-            squatT = 1; // Locked deep En Garde stance
-        }
-
-        // Natural athletic breathing sway
-        const sway = Math.sin(elapsedSec * 3) * (squatT > 0.8 ? 1.5 : 0.8);
-
-        // Core Biomechanical Coordinates
-        const rootX = 390;
-        const hipDrop = squatT * 38;
-        const hipY = (groundY - 145) + hipDrop + sway;
-
-        const frontFootX = rootX + 75 + (squatT * 28);
-        const frontFootY = groundY;
-        const rearFootX = rootX - 60;
-        const rearFootY = groundY;
-
-        // Dynamic Knee Interpolation
-        const frontKneeX = rootX + 45 + (squatT * 36);
-        const frontKneeY = hipY + 58 + (squatT * 12);
-
-        const rearKneeX = rootX - 35 - (squatT * 8);
-        const rearKneeY = hipY + 56 + (squatT * 14);
-
-        // Ambient Contact Shadows
-        const drawShadow = (x, y, radiusX, radiusY) => {
-            ctx.save();
-            const shadowGrad = ctx.createRadialGradient(x, y, 2, x, y, radiusX);
-            shadowGrad.addColorStop(0, "rgba(0, 0, 0, 0.65)");
-            shadowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
-            ctx.fillStyle = shadowGrad;
-            ctx.beginPath();
-            ctx.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-        };
-
-        drawShadow(rearFootX + 8, groundY + 2, 28, 7);
-        drawShadow(frontFootX + 10, groundY + 2, 32, 7);
-        drawShadow(rootX + 15, groundY + 2, 65, 10); // Core body shadow
-
-        // 1. 90-Degree Floor Alignment Graphic
-        ctx.save();
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = "rgba(250, 204, 21, 0.85)";
-        ctx.fillStyle = "rgba(250, 204, 21, 0.15)";
-
-        ctx.beginPath();
-        ctx.moveTo(rearFootX, groundY);
-        ctx.lineTo(rearFootX + 45, groundY);
-        ctx.lineTo(rearFootX + 45, groundY - 40);
-        ctx.stroke();
-
-        // 90-degree corner square symbol
-        ctx.fillRect(rearFootX + 33, groundY - 12, 12, 12);
-        ctx.strokeRect(rearFootX + 33, groundY - 12, 12, 12);
-
-        ctx.fillStyle = "#fde047";
-        ctx.font = "700 11px 'Plus Jakarta Sans', sans-serif";
-        ctx.fillText("90° L-STANCE", rearFootX - 10, groundY + 20);
-        ctx.restore();
-
-        // 2. Center of Gravity Balance Line (Active in Phase 3)
-        if (elapsedSec >= 18) {
-            ctx.save();
-            ctx.strokeStyle = "#38bdf8";
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            ctx.moveTo(rootX + 12, hipY - 60);
-            ctx.lineTo(rootX + 12, groundY);
-            ctx.stroke();
-
-            ctx.fillStyle = "#38bdf8";
-            ctx.font = "700 10px 'Plus Jakarta Sans', sans-serif";
-            ctx.fillText("50% / 50% BALANCE", rootX - 40, groundY - 8);
-            ctx.restore();
-        }
-
-        ctx.save();
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-
-        // 3. Rear Leg (Breeches, Knee, Calf, and Foot)
-        // Thigh
-        ctx.strokeStyle = "#cbd5e1";
-        ctx.lineWidth = 15;
-        ctx.beginPath();
-        ctx.moveTo(rootX - 6, hipY + 8);
-        ctx.lineTo(rearKneeX, rearKneeY);
-        ctx.stroke();
-
-        // Lower Leg / Shin
-        ctx.strokeStyle = "#94a3b8";
-        ctx.lineWidth = 13;
-        ctx.beginPath();
-        ctx.moveTo(rearKneeX, rearKneeY);
-        ctx.lineTo(rearFootX + 8, rearFootY - 6);
-        ctx.stroke();
-
-        // Rear Fencing Shoe (Side View Profile)
-        ctx.fillStyle = "#1e293b";
-        ctx.beginPath();
-        ctx.roundRect(rearFootX - 12, rearFootY - 8, 38, 10, 3);
-        ctx.fill();
-        ctx.fillStyle = "#38bdf8";
-        ctx.fillRect(rearFootX - 10, rearFootY - 2, 34, 3); // Blue sole grip
-
-        // 4. Front Leg (Lead Stance toward Opponent)
-        // Thigh
-        ctx.strokeStyle = "#f1f5f9";
-        ctx.lineWidth = 16;
-        ctx.beginPath();
-        ctx.moveTo(rootX + 12, hipY + 8);
-        ctx.lineTo(frontKneeX, frontKneeY);
-        ctx.stroke();
-
-        // Lower Leg / Front Calf
-        ctx.strokeStyle = "#e2e8f0";
-        ctx.lineWidth = 14;
-        ctx.beginPath();
-        ctx.moveTo(frontKneeX, frontKneeY);
-        ctx.lineTo(frontFootX, frontFootY - 6);
-        ctx.stroke();
-
-        // Front Fencing Shoe (Pointing straight at adversary)
-        ctx.fillStyle = "#0f172a";
-        ctx.beginPath();
-        ctx.moveTo(frontFootX - 12, frontFootY - 8);
-        ctx.lineTo(frontFootX + 28, frontFootY - 8);
-        ctx.lineTo(frontFootX + 32, frontFootY - 1);
-        ctx.lineTo(frontFootX - 12, frontFootY - 1);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = "#38bdf8";
-        ctx.fillRect(frontFootX - 10, frontFootY - 2, 40, 3); // Shoe outsole
-
-        // 5. Torso & Fencing Jacket (Plastron)
-        const spineAngle = 0.04;
-        const chestX = rootX + 4 + (squatT * 3);
-        const chestY = hipY - 65;
-
-        // Fencing jacket body
-        ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = "#94a3b8";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(rootX - 18, hipY + 12);
-        ctx.lineTo(rootX + 26, hipY + 12);
-        ctx.lineTo(chestX + 24, chestY);
-        ctx.lineTo(chestX - 22, chestY);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Tournament plastron / harness line
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.45)";
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(chestX - 14, chestY + 6);
-        ctx.lineTo(rootX + 16, hipY + 10);
-        ctx.stroke();
-
-        // 6. Non-Sword Trailing Arm (High Counter-Balance Arc)
-        ctx.strokeStyle = "#cbd5e1";
-        ctx.lineWidth = 8;
-        const rearShoulderX = chestX - 18;
-        const rearShoulderY = chestY + 6;
-        const rearElbowX = rearShoulderX - 28;
-        const rearElbowY = rearShoulderY - 26;
-        const rearHandX = rearElbowX + 6;
-        const rearHandY = rearElbowY - 34;
-
-        ctx.beginPath();
-        ctx.moveTo(rearShoulderX, rearShoulderY);
-        ctx.lineTo(rearElbowX, rearElbowY);
-        ctx.lineTo(rearHandX, rearHandY);
-        ctx.stroke();
-
-        // Trailing hand
-        ctx.fillStyle = "#ffffff";
-        ctx.beginPath();
-        ctx.arc(rearHandX, rearHandY, 5.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // 7. Head, Collar & Fencing Mask
-        const headCenterX = chestX + 2;
-        const headCenterY = chestY - 34;
-
-        // White neck bib (Protective collar)
-        ctx.fillStyle = "#e2e8f0";
-        ctx.beginPath();
-        ctx.moveTo(headCenterX - 14, headCenterY + 14);
-        ctx.lineTo(headCenterX + 14, headCenterY + 14);
-        ctx.lineTo(headCenterX + 18, headCenterY + 28);
-        ctx.lineTo(headCenterX - 18, headCenterY + 28);
-        ctx.closePath();
-        ctx.fill();
-
-        // Fencing mask oval base
-        ctx.save();
-        ctx.translate(headCenterX, headCenterY);
-        ctx.rotate(0.08); // Slight forward gaze angle
-
-        ctx.fillStyle = "#0f172a";
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 19, 26, 0, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Stainless wire mesh pattern inside mask
-        ctx.strokeStyle = "rgba(56, 189, 248, 0.3)";
-        ctx.lineWidth = 1;
-        for (let gridX = -14; gridX <= 14; gridX += 4) {
-            ctx.beginPath();
-            ctx.moveTo(gridX, -22);
-            ctx.lineTo(gridX, 22);
-            ctx.stroke();
-        }
-        for (let gridY = -20; gridY <= 20; gridY += 4) {
-            ctx.beginPath();
-            ctx.moveTo(-15, gridY);
-            ctx.lineTo(15, gridY);
-            ctx.stroke();
-        }
-
-        // Mask outer protective trim & gloss highlight
-        ctx.strokeStyle = "#38bdf8";
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 19, 26, 0, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(6, -8, 12, -Math.PI / 3, Math.PI / 4);
-        ctx.stroke();
-        ctx.restore();
-
-        // 8. Lead Sword Arm & Foil En Garde
-        const leadShoulderX = chestX + 18;
-        const leadShoulderY = chestY + 8;
-        const leadElbowX = leadShoulderX + 32;
-        const leadElbowY = leadShoulderY + 28 - (squatT * 6);
-        const leadHandX = leadElbowX + 38;
-        const leadHandY = leadElbowY - 14;
-
-        // Glove and forearm
-        ctx.strokeStyle = "#ffffff";
-        ctx.lineWidth = 10;
-        ctx.beginPath();
-        ctx.moveTo(leadShoulderX, leadShoulderY);
-        ctx.lineTo(leadElbowX, leadElbowY);
-        ctx.lineTo(leadHandX, leadHandY);
-        ctx.stroke();
-
-        // Glove Cuff (Manchette)
-        ctx.strokeStyle = "#38bdf8";
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(leadHandX - 10, leadHandY - 4);
-        ctx.lineTo(leadHandX - 4, leadHandY + 8);
-        ctx.stroke();
-
-        // Foil Bell Guard (Coquille)
-        ctx.save();
-        const guardGrad = ctx.createRadialGradient(leadHandX, leadHandY, 2, leadHandX, leadHandY, 14);
-        guardGrad.addColorStop(0, "#ffffff");
-        guardGrad.addColorStop(0.5, "#94a3b8");
-        guardGrad.addColorStop(1, "#334155");
-        ctx.fillStyle = guardGrad;
-        ctx.strokeStyle = "#e2e8f0";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.ellipse(leadHandX, leadHandY, 8, 16, -0.3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        // Steel Foil Blade
-        const bladeTipX = leadHandX + 160;
-        const bladeTipY = leadHandY - 12;
-
-        ctx.strokeStyle = "#f8fafc";
-        ctx.lineWidth = 2.2;
-        ctx.beginPath();
-        ctx.moveTo(leadHandX + 4, leadHandY);
-        ctx.lineTo(bladeTipX, bladeTipY);
-        ctx.stroke();
-
-        // Rubber Foil Tip Button (Pointe d'arrêt)
-        ctx.fillStyle = "#ef4444";
-        ctx.beginPath();
-        ctx.arc(bladeTipX, bladeTipY, 3.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
-        ctx.restore();
-    }
-
-    function drawReticle() {
-        if (!targetReticle) return;
-        ctx.save();
-        const { x, y, r, clicked, label } = targetReticle;
-
-        ctx.strokeStyle = clicked ? "#22c55e" : "#ef4444";
-        ctx.fillStyle = clicked ? "rgba(34, 197, 94, 0.22)" : "rgba(239, 68, 68, 0.16)";
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([5, 5]);
-
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.setLineDash([]);
-        ctx.fillStyle = clicked ? "#86efac" : "#fca5a5";
-        ctx.font = "bold 13px Mukta, sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText(clicked ? "✓ उत्तम (अचूक)" : label, x, y - r - 8);
-
-        ctx.restore();
-    }
-
-    function loop() {
-        if (isPaused) return;
-
-        const elapsedSec = (performance.now() - startTime) / 1000;
-        updateHUD(elapsedSec);
-
-        ctx.clearRect(0, 0, W, H);
-        drawPiste();
-        drawFencer(elapsedSec);
-        drawReticle();
-
-        if (elapsedSec < DURATION) {
-            animFrameId = requestAnimationFrame(loop);
-        }
+        resolveErrorCorrectionTap(clickX, clickY);
     }
 
     window.RivaCartridge = {
