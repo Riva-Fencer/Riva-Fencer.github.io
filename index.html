@@ -12,7 +12,7 @@
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
         
         body {
-            background: #080c14;
+            background: #070a12;
             color: #f8fafc;
             font-family: -apple-system, BlinkMacSystemFont, 'Mukta', 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
@@ -21,19 +21,21 @@
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
-            padding-bottom: 58px; /* Space for universal persistent bottom anchor */
+            padding-bottom: 56px;
         }
 
         /* ------------------------------------------------------------- */
-        /* LAYER 1: DUAL-PORTAL DASHBOARD                                */
+        /* LAYER 1: MINIMAL ATHLETIC DUAL-PORTAL                         */
         /* ------------------------------------------------------------- */
         .portal-stage {
             display: flex;
             flex-direction: column;
             width: 100%;
-            max-width: 520px;
-            padding: 16px 14px 20px;
-            gap: 14px;
+            max-width: 480px;
+            height: calc(100vh - 72px);
+            height: calc(100dvh - 72px);
+            padding: 16px 14px 10px;
+            gap: 16px;
         }
         .portal-top-bar {
             display: flex;
@@ -43,13 +45,11 @@
             background: #0f172a;
             border: 1px solid #1e293b;
             border-radius: 14px;
+            flex-shrink: 0;
         }
-        .app-branding {
-            display: flex;
-            flex-direction: column;
-        }
-        .app-name { font-size: 19px; font-weight: 800; color: #38bdf8; letter-spacing: 0.3px; }
-        .app-subtext { font-size: 11px; color: #94a3b8; font-weight: 600; }
+        .app-branding { display: flex; flex-direction: column; }
+        .app-name { font-size: 18px; font-weight: 800; color: #38bdf8; letter-spacing: 0.5px; }
+        .app-subtext { font-size: 12px; color: #94a3b8; font-weight: 600; }
         .wake-pill {
             display: flex;
             align-items: center;
@@ -67,61 +67,67 @@
             background: #22c55e; box-shadow: 0 0 6px #22c55e;
         }
 
-        /* PORTAL CARDS */
+        /* MINIMAL PORTAL CARDS */
+        .portal-cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+        }
         .portal-card {
-            background: linear-gradient(145deg, #0f172a 0%, #131d33 100%);
-            border: 1.5px solid #1e293b;
-            border-radius: 18px;
-            padding: 18px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 20px 22px;
+            border-radius: 20px;
             cursor: pointer;
             position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            box-shadow: 0 10px 26px rgba(0,0,0,0.5);
             transition: transform 0.12s ease, border-color 0.12s ease;
             touch-action: manipulation;
         }
-        .portal-card:active {
-            transform: scale(0.98);
-            border-color: #38bdf8;
+        .portal-card:active { transform: scale(0.98); }
+
+        .card-drills {
+            background: linear-gradient(135deg, #0c182b 0%, #0f2744 100%);
+            border: 1.5px solid #0284c7;
         }
-        .portal-card.card-drills {
-            border-left: 5px solid #38bdf8;
+        .card-drills:active { border-color: #38bdf8; }
+
+        .card-sparrer {
+            background: linear-gradient(135deg, #1f1807 0%, #2f2308 100%);
+            border: 1.5px solid #d97706;
         }
-        .portal-card.card-sparrer {
-            border-left: 5px solid #f59e0b;
+        .card-sparrer:active { border-color: #f59e0b; }
+
+        .portal-icon {
+            font-size: 40px;
+            width: 64px; height: 64px;
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
-        .portal-badge {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 6px;
-            margin-bottom: 8px;
+        .card-drills .portal-icon {
+            background: rgba(2, 132, 199, 0.2);
+            border: 1px solid rgba(56, 189, 248, 0.4);
         }
-        .badge-drills { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
-        .badge-sparrer { background: rgba(245, 158, 11, 0.15); color: #facc15; }
-        .portal-heading {
-            font-size: 18px;
-            font-weight: 800;
-            color: #f8fafc;
-            margin-bottom: 4px;
-        }
-        .portal-desc {
-            font-size: 12px;
-            color: #94a3b8;
-            line-height: 1.4;
-        }
-        .portal-meta {
-            margin-top: 10px;
-            font-size: 11px;
-            color: #cbd5e1;
-            display: flex;
-            gap: 12px;
-            font-weight: 700;
+        .card-sparrer .portal-icon {
+            background: rgba(217, 119, 6, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.4);
         }
 
+        .portal-info { display: flex; flex-direction: column; gap: 4px; }
+        .portal-title { font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: 0.3px; }
+        .portal-tag {
+            font-size: 13px; font-weight: 700;
+            padding: 3px 10px; border-radius: 8px; width: fit-content;
+        }
+        .tag-drills { background: rgba(56, 189, 248, 0.16); color: #38bdf8; }
+        .tag-sparrer { background: rgba(245, 158, 11, 0.16); color: #facc15; }
+
         /* ------------------------------------------------------------- */
-        /* DRILL CATALOG VIEW (INSIDE PORTAL 1)                          */
+        /* PORTAL 1 SUB-VIEW: DRILL CATALOG                              */
         /* ------------------------------------------------------------- */
         .catalog-stage {
             display: flex;
@@ -140,9 +146,9 @@
             background: #1e293b;
             border: 1px solid #334155;
             color: #f8fafc;
-            padding: 6px 12px;
+            padding: 6px 14px;
             border-radius: 8px;
-            font-size: 12.5px;
+            font-size: 13px;
             font-weight: 700;
             cursor: pointer;
         }
@@ -179,59 +185,66 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 6px 10px 62px; /* Bottom clearance for persistent anchor */
+            padding: 6px 10px 58px;
             overflow: hidden;
+            position: relative;
         }
         .top-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             width: 100%;
-            height: 40px;
+            height: 38px;
             flex-shrink: 0;
             margin-bottom: 4px;
         }
-        .header-back-btn {
+        .header-left-cluster {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .header-btn {
             background: #1e293b;
             border: 1px solid #334155;
             color: #f8fafc;
             border-radius: 10px;
-            padding: 6px 12px;
-            font-size: 13px;
+            padding: 6px 11px;
+            font-size: 12.5px;
             font-weight: 700;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 4px;
         }
+        .header-btn:active { background: #0284c7; }
+        .header-home-btn { display: none; } /* Appears inside header only in landscape */
+
         .header-title-pill {
             background: #0f172a;
             border: 1px solid #1e293b;
-            padding: 6px 14px;
+            padding: 5px 14px;
             border-radius: 20px;
             font-size: 13px;
             font-weight: 800;
             color: #38bdf8;
-            letter-spacing: 0.3px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
-        .header-title-pill:active { background: #1e293b; }
 
         .timer-ring-container {
             position: relative;
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
         }
         .timer-ring-svg {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             transform: rotate(-90deg);
         }
         .timer-track { fill: none; stroke: #1e293b; stroke-width: 3.5; }
@@ -266,11 +279,12 @@
             touch-action: none;
         }
 
+        /* COACH FEEDBACK TICKER */
         .coach-feedback-box {
             background: #0f172a;
             border: 1px solid #1e293b;
             border-radius: 12px;
-            padding: 8px 12px;
+            padding: 7px 12px;
             text-align: center;
             width: 100%;
             flex-shrink: 0;
@@ -280,7 +294,7 @@
             font-size: 13.5px;
             font-weight: 700;
             color: #facc15;
-            min-height: 24px;
+            min-height: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -318,7 +332,7 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            min-width: 90px;
+            min-width: 88px;
             justify-content: center;
             touch-action: none;
             -webkit-touch-callout: none;
@@ -339,14 +353,14 @@
 
         .dock-actions { display: flex; align-items: center; gap: 8px; }
         .action-icon-btn {
-            width: 42px; height: 42px;
+            width: 40px; height: 40px;
             background: #1e293b; border: 1px solid #334155;
             border-radius: 50%; color: #f8fafc;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer;
         }
         .play-hero-btn {
-            width: 50px; height: 50px;
+            width: 48px; height: 48px;
             background: #0284c7; border: 2px solid #38bdf8;
             border-radius: 50%; color: #ffffff;
             display: flex; align-items: center; justify-content: center;
@@ -354,7 +368,7 @@
         }
 
         /* ------------------------------------------------------------- */
-        /* PORTAL 2 PREVIEW / PLACEHOLDER STAGE                          */
+        /* VIEW 4: SPARRER ENGINE PREVIEW                                */
         /* ------------------------------------------------------------- */
         .sparrer-placeholder-stage {
             display: flex;
@@ -362,10 +376,10 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            max-width: 520px;
+            max-width: 500px;
             padding: 30px 16px;
             text-align: center;
-            gap: 16px;
+            gap: 14px;
         }
         .sparrer-icon-box {
             width: 72px; height: 72px; border-radius: 20px;
@@ -374,17 +388,17 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 32px;
         }
-        .sparrer-title { font-size: 20px; font-weight: 800; color: #facc15; }
-        .sparrer-desc { font-size: 13px; color: #94a3b8; line-height: 1.5; max-width: 380px; }
+        .sparrer-title { font-size: 22px; font-weight: 800; color: #facc15; }
+        .sparrer-desc { font-size: 13.5px; color: #94a3b8; line-height: 1.5; max-width: 360px; }
 
         /* ------------------------------------------------------------- */
-        /* UNIVERSAL PERSISTENT BOTTOM ANCHOR (LEVEL 0 NAV)              */
+        /* UNIVERSAL BOTTOM ANCHOR                                       */
         /* ------------------------------------------------------------- */
         .universal-dock {
             position: fixed;
             bottom: 0; left: 0; right: 0;
             height: 52px;
-            background: rgba(11, 17, 30, 0.95);
+            background: rgba(11, 17, 30, 0.96);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             border-top: 1px solid #1e293b;
@@ -395,28 +409,98 @@
             z-index: 800;
         }
         .universal-nav-btn {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            padding: 8px 16px;
-            border-radius: 8px;
+            background: none; border: none;
+            color: #94a3b8; font-size: 12.5px; font-weight: 700;
+            display: flex; align-items: center; gap: 6px;
+            cursor: pointer; padding: 8px 16px; border-radius: 8px;
             transition: color 0.12s ease, background 0.12s ease;
         }
         .universal-nav-btn:active, .universal-nav-btn.active {
-            color: #38bdf8;
-            background: rgba(56, 189, 248, 0.1);
+            color: #38bdf8; background: rgba(56, 189, 248, 0.1);
         }
         .universal-nav-btn svg { width: 18px; height: 18px; }
 
         /* ------------------------------------------------------------- */
-        /* LAYER 0: STANCE CALIBRATION & PROFILE DRAWER                  */
+        /* FULL-STAGE LANDSCAPE IMMERSION ENGINE (2X FENCER SCALE)       */
         /* ------------------------------------------------------------- */
+        @media (orientation: landscape) and (max-height: 520px) {
+            body { padding-bottom: 0 !important; }
+
+            /* 1. Universal bottom dock is hidden in landscape arena */
+            .universal-dock { display: none !important; }
+
+            .arena-stage {
+                padding: 4px 10px 6px;
+                height: 100dvh;
+                justify-content: space-between;
+            }
+
+            /* 2. Top Header houses Home escape button */
+            .top-header {
+                height: 30px;
+                margin-bottom: 2px;
+            }
+            .header-home-btn {
+                display: flex;
+                background: #0284c7;
+                border-color: #38bdf8;
+                padding: 3px 9px;
+                font-size: 11px;
+            }
+            .header-btn { padding: 3px 8px; font-size: 11.5px; }
+            .header-title-pill { padding: 3px 10px; font-size: 11.5px; }
+            .timer-ring-container, .timer-ring-svg { width: 28px; height: 28px; }
+            .timer-label { font-size: 9.5px; }
+
+            /* 3. Canvas expands to fill 85% of viewport height */
+            .canvas-host {
+                width: auto;
+                height: calc(100dvh - 78px) !important;
+                max-height: calc(100dvh - 78px) !important;
+                aspect-ratio: 820 / 420;
+                margin: 0 auto;
+            }
+
+            /* 4. Coach caption floats over bottom piste (takes 0 layout height) */
+            .coach-feedback-box {
+                position: absolute;
+                bottom: 46px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: auto;
+                max-width: 82%;
+                background: rgba(15, 23, 42, 0.82);
+                backdrop-filter: blur(6px);
+                -webkit-backdrop-filter: blur(6px);
+                border: 1px solid rgba(56, 189, 248, 0.35);
+                border-radius: 20px;
+                padding: 2px 14px;
+                margin: 0;
+                pointer-events: none;
+                z-index: 20;
+            }
+            #status-box {
+                font-size: 12px;
+                min-height: 18px;
+            }
+            .hint-bar { display: none; }
+
+            /* 5. Ultra-slim bottom controls dock */
+            .controls-dock {
+                height: 38px;
+                padding: 2px 12px;
+                margin-top: 2px;
+            }
+            .nav-step-btn {
+                padding: 5px 12px;
+                min-width: 76px;
+                font-size: 11.5px;
+            }
+            .action-icon-btn { width: 32px; height: 32px; }
+            .play-hero-btn { width: 34px; height: 34px; }
+        }
+
+        /* LAYER 0 MODAL */
         .settings-overlay {
             position: fixed; inset: 0; background: rgba(4, 7, 13, 0.85);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -424,14 +508,13 @@
             padding: 16px;
         }
         .settings-card {
-            width: 100%; max-width: 400px; background: #0f172a;
-            border: 1.5px solid #38bdf8; border-radius: 18px; padding: 20px;
+            width: 100%; max-width: 380px; background: #0f172a;
+            border: 1.5px solid #38bdf8; border-radius: 18px; padding: 18px;
             box-shadow: 0 16px 36px rgba(0,0,0,0.85);
-            max-height: 90vh; overflow-y: auto;
         }
         .settings-title {
-            font-size: 17px; font-weight: 800; color: #f8fafc;
-            margin-bottom: 14px; text-align: center;
+            font-size: 16px; font-weight: 800; color: #f8fafc;
+            margin-bottom: 12px; text-align: center;
         }
         .settings-card label {
             font-size: 12px; font-weight: 700; color: #94a3b8;
@@ -442,40 +525,26 @@
             border-radius: 8px; padding: 0 10px; color: #fff; font-size: 13.5px;
             margin-top: 4px; outline: none;
         }
-        
-        /* STANCE FOOTPRINT SELECTOR */
-        .stance-group {
-            display: flex; gap: 8px; margin-top: 6px;
-        }
+        .stance-group { display: flex; gap: 8px; margin-top: 6px; }
         .stance-btn {
-            flex: 1; padding: 10px 6px; background: #1e293b;
+            flex: 1; padding: 8px 4px; background: #1e293b;
             border: 1.5px solid #334155; border-radius: 10px;
             color: #cbd5e1; cursor: pointer; text-align: center;
-            font-family: inherit; font-weight: 700; font-size: 11.5px;
+            font-family: inherit; font-weight: 700; font-size: 11px;
             transition: all 0.12s ease;
         }
-        .stance-btn .footprint { font-size: 16px; display: block; margin-bottom: 2px; }
+        .stance-btn .footprint { font-size: 15px; display: block; margin-bottom: 2px; }
         .stance-btn.active {
             background: rgba(2, 132, 199, 0.25);
             border-color: #38bdf8; color: #38bdf8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
         }
-
-        /* 3-SECOND SHOE-STEP VISUAL GUIDE */
-        .shoe-guide-box {
-            background: #1e293b; border-radius: 8px; padding: 10px;
-            margin-top: 12px; border-left: 3px solid #38bdf8;
-        }
-        .shoe-guide-title { font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 4px; }
-        .shoe-guide-item { font-size: 11px; color: #cbd5e1; line-height: 1.4; }
-
         .settings-save-btn {
             width: 100%; height: 42px; margin-top: 16px; background: #0284c7;
             color: #fff; border: none; border-radius: 8px; font-weight: 800;
             font-size: 14px; cursor: pointer;
         }
 
-        /* QUICK JUMP SUB-DRILL DRAWER */
+        /* DRAWER OVERLAY */
         .drawer-overlay {
             position: fixed; inset: 0; background: rgba(4, 7, 13, 0.78);
             backdrop-filter: blur(6px); z-index: 900;
@@ -493,30 +562,10 @@
         .drawer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
         .drawer-item-btn {
             background: #1e293b; color: #f8fafc; border: 1px solid #334155;
-            border-radius: 8px; padding: 10px 8px; font-size: 12px; font-weight: 700;
+            border-radius: 8px; padding: 9px 8px; font-size: 12px; font-weight: 700;
             cursor: pointer; text-align: left;
         }
         .drawer-item-btn:active { background: #0284c7; border-color: #38bdf8; }
-
-        /* ZERO-SCROLL LANDSCAPE COCKPIT */
-        @media (orientation: landscape) and (max-height: 520px) {
-            body { padding-bottom: 42px; }
-            .universal-dock { height: 40px; padding: 0 10px; }
-            .universal-nav-btn { padding: 4px 10px; font-size: 11px; }
-            .arena-stage { padding: 4px 8px 46px; justify-content: space-between; }
-            .top-header { height: 32px; margin-bottom: 2px; }
-            .header-title-pill { padding: 4px 12px; font-size: 12px; }
-            .timer-ring-container, .timer-ring-svg { width: 32px; height: 32px; }
-            .timer-label { font-size: 10px; }
-            .canvas-host { width: auto; height: calc(100dvh - 128px); max-width: 100%; aspect-ratio: 820 / 420; margin: 0 auto; }
-            .coach-feedback-box { padding: 4px 8px; margin-top: 2px; }
-            #status-box { min-height: 18px; font-size: 12px; }
-            .hint-bar { font-size: 10px; }
-            .controls-dock { padding: 4px 10px; margin-top: 2px; }
-            .nav-step-btn { padding: 6px 12px; min-width: 80px; font-size: 12px; }
-            .action-icon-btn { width: 34px; height: 34px; }
-            .play-hero-btn { width: 38px; height: 38px; }
-        }
     </style>
 </head>
 <body>
@@ -530,42 +579,40 @@
                 <span class="app-name">RIVA FENCER</span>
                 <span class="app-subtext" id="athleteStatusLine">सराव साथी • रीवा</span>
             </div>
-            <div class="wake-pill" id="wakeStatusPill">
+            <div class="wake-pill">
                 <span class="wake-dot"></span>
                 <span id="wakeStatusText">जागृत</span>
             </div>
         </header>
 
-        <!-- PORTAL 1: SARAAV (KINETIC DRILL DECK) -->
-        <article class="portal-card card-drills" onclick="openDrillCatalog()">
-            <span class="portal-badge badge-drills">पोर्टल १ • बायोमेकॅनिक्स</span>
-            <h2 class="portal-heading">सराव (Kinetic Drills)</h2>
-            <p class="portal-desc">शास्त्रीय तंत्र, पाऊल क्रम, ब्लेड बकलिंग व स्लो-मोशन फ्रेम अभ्यास.</p>
-            <div class="portal-meta">
-                <span>📚 १००+ सराव संच</span>
-                <span>⏱️ अचूक ३० से. फेऱ्या</span>
-            </div>
-        </article>
+        <div class="portal-cards-container">
+            <!-- PORTAL 1: SARAAV -->
+            <article class="portal-card card-drills" onclick="openDrillCatalog()">
+                <div class="portal-icon">🤺</div>
+                <div class="portal-info">
+                    <h2 class="portal-title">सराव</h2>
+                    <span class="portal-tag tag-drills">तंत्र व लय • 1–100 Drills</span>
+                </div>
+            </article>
 
-        <!-- PORTAL 2: AAVHAN (REACTION SPARRER) -->
-        <article class="portal-card card-sparrer" onclick="openReactionSparrer()">
-            <span class="portal-badge badge-sparrer">पोर्टल २ • रिअॅक्शन कॉम्बॅट</span>
-            <h2 class="portal-heading">आव्हान (Reaction Sparrer)</h2>
-            <p class="portal-desc">अनपेक्षित मुकाबला पेसिंग, 'थांबा!' तोल ब्रेक व १०-फूट अ‍ॅम्बियंट व्हिजन संकेत.</p>
-            <div class="portal-meta">
-                <span>⚡ मायक्रो-बर्स्ट बाऊट</span>
-                <span>🛑 एक्सेंट्रिक बॅलन्स</span>
-            </div>
-        </article>
+            <!-- PORTAL 2: AAVHAN -->
+            <article class="portal-card card-sparrer" onclick="openReactionSparrer()">
+                <div class="portal-icon">⚡</div>
+                <div class="portal-info">
+                    <h2 class="portal-title">आव्हान</h2>
+                    <span class="portal-tag tag-sparrer">रिअॅक्शन स्पॅरर • Combat Reflex</span>
+                </div>
+            </article>
+        </div>
     </main>
 
     <!-- ------------------------------------------------------------- -->
-    <!-- VIEW 2: NUMERIC DRILL CATALOG (PORTAL 1 SUB-VIEW)             -->
+    <!-- VIEW 2: NUMERIC DRILL CATALOG                                 -->
     <!-- ------------------------------------------------------------- -->
     <section id="catalogView" class="catalog-stage" style="display: none;">
         <div class="catalog-nav-header">
             <button class="back-portal-btn" onclick="goHome()">← पोर्टल मेनू</button>
-            <span style="font-size:14px; font-weight:800; color:#38bdf8;">सराव डेक निवडा</span>
+            <span style="font-size:14px; font-weight:800; color:#38bdf8;">सराव संच निवडा</span>
         </div>
         <div class="numeric-grid" id="numericGridContainer"></div>
     </section>
@@ -575,9 +622,14 @@
     <!-- ------------------------------------------------------------- -->
     <section id="arenaView" class="arena-stage" style="display: none;">
         <header class="top-header">
-            <button class="header-back-btn" onclick="backToCatalog()">
-                <span>← यादी</span>
-            </button>
+            <div class="header-left-cluster">
+                <button class="header-btn" onclick="backToCatalog()">
+                    <span>← यादी</span>
+                </button>
+                <button class="header-btn header-home-btn" onclick="goHome()">
+                    <span>⌂ होम</span>
+                </button>
+            </div>
             
             <div class="header-title-pill" id="drillHeaderBadge" onclick="toggleSubDrillDrawer(true)">
                 <span id="drillHeaderBadgeText">Drill #1</span>
@@ -615,21 +667,21 @@
                 </button>
 
                 <button class="play-hero-btn" id="masterPlayBtn" onclick="triggerPlayPause()" aria-label="Play/Pause">
-                    <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <svg id="playIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="6 4 20 12 6 20 6 4"></polygon>
                     </svg>
-                    <svg id="pauseIcon" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <svg id="pauseIcon" style="display:none;" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <rect x="6" y="4" width="4" height="16"></rect>
                         <rect x="14" y="4" width="4" height="16"></rect>
                     </svg>
                 </button>
 
                 <button class="action-icon-btn" id="audioBtn" onclick="triggerAudioToggle()" aria-label="Audio">
-                    <svg id="audioOnIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg id="audioOnIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                         <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                     </svg>
-                    <svg id="audioMuteIcon" style="display:none;" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg id="audioMuteIcon" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                         <line x1="23" y1="9" x2="17" y2="15"></line>
                         <line x1="17" y1="9" x2="23" y2="15"></line>
@@ -644,14 +696,14 @@
     </section>
 
     <!-- ------------------------------------------------------------- -->
-    <!-- VIEW 4: PORTAL 2 ENGINE PREVIEW                               -->
+    <!-- VIEW 4: SPARRER ENGINE PREVIEW                                -->
     <!-- ------------------------------------------------------------- -->
     <section id="sparrerPlaceholderView" class="sparrer-placeholder-stage" style="display: none;">
         <div class="sparrer-icon-box">⚡</div>
         <h2 class="sparrer-title">आव्हान (Reaction Sparrer)</h2>
         <p class="sparrer-desc">
-            १०-फूट अ‍ॅम्बियंट व्हिजन डिस्प्ले (हिरवा: पुढे, निळा: मागे, अंबर: 'थांबा!' ब्रेक).
-            मायक्रो-बर्स्ट बाऊट स्ट्रक्चर (३० से. मुकाबला / १५ से. विश्रांती) पुढील स्टेपमध्ये सक्रिय होईल!
+            १०-फूट अ‍ॅम्बियंट व्हिजन संकेत (हिरवा: पुढे, निळा: मागे, अंबर: 'थांबा!' ब्रेक).
+            मायक्रो-बर्स्ट बाऊट इंजिन पुढील टप्प्यात सक्रिय होईल.
         </p>
         <button class="back-portal-btn" onclick="goHome()" style="padding:10px 20px; font-size:13.5px; margin-top:8px;">
             ← मुख्य पोर्टलवर परत जा
@@ -659,7 +711,7 @@
     </section>
 
     <!-- ------------------------------------------------------------- -->
-    <!-- UNIVERSAL PERSISTENT BOTTOM ANCHOR                            -->
+    <!-- UNIVERSAL BOTTOM ANCHOR (PORTRAIT ONLY)                       -->
     <!-- ------------------------------------------------------------- -->
     <nav class="universal-dock" aria-label="Universal Navigation">
         <button class="universal-nav-btn active" id="univHomeBtn" onclick="goHome()">
@@ -679,9 +731,7 @@
         </button>
     </nav>
 
-    <!-- ------------------------------------------------------------- -->
-    <!-- QUICK JUMP SUB-DRILL DRAWER                                   -->
-    <!-- ------------------------------------------------------------- -->
+    <!-- QUICK JUMP SUB-DRILL DRAWER -->
     <div id="subDrillDrawer" class="drawer-overlay" style="display: none;" onclick="toggleSubDrillDrawer(false)">
         <div class="drawer-card" onclick="event.stopPropagation()">
             <div class="drawer-title">सराव भाग निवडा (Select Sub-Drill)</div>
@@ -689,9 +739,7 @@
         </div>
     </div>
 
-    <!-- ------------------------------------------------------------- -->
-    <!-- LAYER 0: STANCE CALIBRATION & PROFILE MODAL                   -->
-    <!-- ------------------------------------------------------------- -->
+    <!-- LAYER 0: STANCE CALIBRATION & PROFILE MODAL -->
     <div id="settingsModal" class="settings-overlay" style="display: none;">
         <div class="settings-card">
             <h3 class="settings-title">खेळाडू व स्टॅन्स कॅलिब्रेशन</h3>
@@ -715,13 +763,6 @@
                     </button>
                 </div>
 
-                <div class="shoe-guide-box">
-                    <div class="shoe-guide-title">📐 ३-सेकंद "शू-स्टेप" चाचणी:</div>
-                    <div class="shoe-guide-item">१. दोन्ही टाचा एकत्र जोडून 'L' आकार बनवा.</div>
-                    <div class="shoe-guide-item">२. पुढचा पाय सरळ समोर टाका (२ ते २.५ बुटांचे अंतर).</div>
-                    <div class="shoe-guide-item">३. गुडघा किंचित वाकवून ऑन-गार्द तोल साधा!</div>
-                </div>
-
                 <div style="display:flex; gap:8px;">
                     <div style="flex:1;">
                         <label>वय (उदा. 6.9)</label>
@@ -740,7 +781,7 @@
 
 <script>
 // -------------------------------------------------------------
-// HARDWARE LIFECYCLE & WAKE LOCK ENGINE
+// HARDWARE LIFECYCLE & WAKE LOCK
 // -------------------------------------------------------------
 let globalWakeLock = null;
 
@@ -767,33 +808,24 @@ function setWakeDot(isActive) {
 }
 
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        requestScreenWake();
-    }
+    if (document.visibilityState === 'visible') requestScreenWake();
 });
 requestScreenWake();
 
 // -------------------------------------------------------------
-// UNIVERSAL PERSISTENT ANCHOR (MASTER KILL SWITCH)
+// UNIVERSAL ESCAPE SWITCH
 // -------------------------------------------------------------
 let currentCartridge = null;
 
 function goHome() {
-    // 1. Terminate all active audio synthesis and voices immediately
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    
-    // 2. Halt running cartridge loop safely
-    if (currentCartridge && currentCartridge.stop) {
-        currentCartridge.stop();
-    }
+    if (currentCartridge && currentCartridge.stop) currentCartridge.stop();
 
-    // 3. Reset views
     document.getElementById('arenaView').style.display = 'none';
     document.getElementById('catalogView').style.display = 'none';
     document.getElementById('sparrerPlaceholderView').style.display = 'none';
     document.getElementById('portalView').style.display = 'flex';
 
-    // 4. Update navigation highlight
     document.getElementById('univHomeBtn').classList.add('active');
     document.getElementById('univSettingsBtn').classList.remove('active');
 }
@@ -826,7 +858,7 @@ function primeAudioOnUserGesture() {
 }
 
 // -------------------------------------------------------------
-// PORTAL 1: DYNAMIC CARTRIDGE AUTO-DISCOVERY
+// DYNAMIC CARTRIDGE AUTO-DISCOVERY
 // -------------------------------------------------------------
 async function autoDetectCatalog() {
     const container = document.getElementById('numericGridContainer');
@@ -944,7 +976,7 @@ function triggerAudioToggle() {
 }
 
 // -------------------------------------------------------------
-// TAP-VS-HOLD SCRUBBING ENGINE (MOBILE HARDENED)
+// TAP-VS-HOLD GESTURE ENGINE
 // -------------------------------------------------------------
 function setupReliableStepHoldButton(config) {
     const { btnId, labelId, normalText, activeHoldText, activeClass, onSingleTap, onHoldStart, onHoldEnd } = config;
@@ -1025,7 +1057,7 @@ setupReliableStepHoldButton({
 });
 
 // -------------------------------------------------------------
-// LAYER 0: STANCE CALIBRATION & PROFILE LOGIC
+// LAYER 0: STANCE CALIBRATION & PROFILE
 // -------------------------------------------------------------
 let selectedStance = 'medium';
 
