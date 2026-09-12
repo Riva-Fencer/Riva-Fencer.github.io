@@ -1,12 +1,12 @@
 /**
- * Riva Fencer - Cartridge 001
- * Preserves exact original IK, connects SVG stopwatch, cleans Marathi TTS, and hooks Prev/Next subdrills.
+ * Riva Fencer - Cartridge 001 (Try #2)
+ * Cleaned canvas HUD (duplicate clock removed), natural Marathi speech, and unified stepping/scrubbing.
  */
 (function () {
     const canvas = document.getElementById('fencingCanvas');
     const ctx = canvas.getContext('2d');
     const statusBox = document.getElementById('status-box');
-    const drillHeaderBadge = document.getElementById('drillHeaderBadge');
+    const badgeText = document.getElementById('drillHeaderBadgeText');
     const timerNumber = document.getElementById('timer-number');
     const timerProgress = document.getElementById('timerProgress');
 
@@ -159,7 +159,7 @@
     }
 
     // -------------------------------------------------------------
-    // NATURAL MARATHI TTS ENGINE
+    // NATURAL MARATHI TTS
     // -------------------------------------------------------------
     let isMuted = false;
     let audioUnlocked = false;
@@ -222,7 +222,7 @@
     }
 
     // -------------------------------------------------------------
-    // 8 SUB-DRILL DEFINITIONS
+    // 8 SUB-DRILLS
     // -------------------------------------------------------------
     const drillTimelineConfigs = [
         {
@@ -1446,7 +1446,7 @@
     }
 
     // -------------------------------------------------------------
-    // STOPWATCH & HUD
+    // STOPWATCH & SYNCHRONIZATION
     // -------------------------------------------------------------
     function updateDrillStateMachine(currentTimeMs) {
         const config = drillTimelineConfigs[currentDrill];
@@ -1463,19 +1463,14 @@
         if (currentSubPhase !== targetPhase.subPhase) {
             currentSubPhase = targetPhase.subPhase;
 
-            if (drillHeaderBadge) {
-                drillHeaderBadge.innerText = `Drill #1 (${currentDrill + 1}/8)`;
+            if (badgeText) {
+                badgeText.innerText = `Drill #1 (${currentDrill + 1}/8)`;
             }
 
             if (statusBox) {
                 statusBox.innerText = getPersonalized(targetPhase.status);
                 statusBox.style.color = targetPhase.color;
             }
-
-            const btns = document.querySelectorAll('.subdrill-btn');
-            btns.forEach((b, i) => {
-                if (i === currentDrill) b.classList.add('active'); else b.classList.remove('active');
-            });
 
             speakCoachingCue(targetPhase.marathiText);
         }
@@ -1490,29 +1485,8 @@
         }
     }
 
-    function drawCanvasHUD(t, totalDuration) {
-        const progress = Math.min(1, t / totalDuration);
-        const remainingSec = Math.ceil((totalDuration - t) / 1000);
-
-        ctx.fillStyle = '#1e293b'; ctx.fillRect(40, 12, 740, 7);
-        ctx.fillStyle = progress > 0.85 ? '#22c55e' : '#38bdf8';
-        ctx.fillRect(40, 12, 740 * progress, 7);
-        ctx.strokeStyle = '#334155'; ctx.strokeRect(40, 12, 740, 7);
-
-        ctx.fillStyle = '#facc15'; ctx.font = '600 12px sans-serif';
-        ctx.fillText(`⏱️ वेळ: ${remainingSec} से | सराव ${currentDrill + 1}/८`, 42, 34);
-
-        if (isSlowMoHold || currentPlaybackSpeed === 0.25) {
-            ctx.fillStyle = '#facc15';
-            ctx.fillText("🐢 स्लो-मोशन (०.२५x)", 360, 34);
-        } else if (currentPlaybackSpeed === 1.75) {
-            ctx.fillStyle = '#38bdf8';
-            ctx.fillText("⚡ जलद (१.७५x)", 360, 34);
-        }
-    }
-
     // -------------------------------------------------------------
-    // ANIMATION LOOP
+    // ANIMATION LOOP (IN-CANVAS CLOCK REMOVED)
     // -------------------------------------------------------------
     function render() {
         const now = performance.now();
@@ -1548,7 +1522,6 @@
         updateAndDrawRipples();
         restoreCameraTransform();
 
-        drawCanvasHUD(effectiveElapsed, DRILL_DURATION);
         requestAnimationFrame(render);
     }
 
