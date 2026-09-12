@@ -1,7 +1,7 @@
 /**
  * Riva Fencer - Tab 3: Kinetic Video Clinic (तपासणी)
- * Release #4: Foreground Multi-Person Filter & Robust Child Tracker
- * Automatically selects the primary athlete in foreground, ignoring background bystanders.
+ * Release #5: Z-Index Canvas Fix, Visible Tracking HUD & Forced Lunge Trigger
+ * 100% Client-Side, Multi-Person Auto Filter, Reliable Extension Spotting.
  */
 
 (function () {
@@ -14,9 +14,9 @@
 
     let countdownTimer = null;
     let isRunning = false;
-    let currentPhase = 'INIT'; // 'INIT', 'STANCE_COUNTDOWN', 'STANCE_AUDIT', 'LUNGE_TRACKING', 'REPORT'
+    let currentPhase = 'INIT';
 
-    // Calibration Baselines (Phase 2 Output)
+    // Baseline geometry
     let baselineData = {
         isRightFacing: true,
         shoulderWidth: 100,
@@ -27,7 +27,7 @@
         guardStars: 3
     };
 
-    // Phase 3 Dynamic State
+    // Tracking state
     const MAX_BUFFER_FRAMES = 75;
     let coordinateBuffer = [];
     let lastFrameTime = 0;
@@ -37,7 +37,7 @@
     let maxExtensionRecorded = 0;
     let peakFrameData = null;
 
-    // Snapshot Double-Buffer
+    // Retrospective Frame Store
     let snapshotCanvasA = null;
     let snapshotCanvasB = null;
     let snapshotCtxA = null;
@@ -45,7 +45,7 @@
     let activeSnapshotSlot = 0;
 
     // -------------------------------------------------------------
-    // 1. AUDIO & SPEECH
+    // 1. SPEECH & AUDIO
     // -------------------------------------------------------------
     function primeSpeechAudio() {
         if ('speechSynthesis' in window) {
@@ -72,7 +72,7 @@
     }
 
     // -------------------------------------------------------------
-    // 2. MEDIAPIPE INITIALIZER (MULTI-PERSON AWARE)
+    // 2. MEDIAPIPE INITIALIZER
     // -------------------------------------------------------------
     async function initMediaPipePose() {
         if (poseLandmarker) return poseLandmarker;
@@ -87,22 +87,21 @@
                 delegate: 'GPU'
             },
             runningMode: 'VIDEO',
-            numPoses: 2 // Detect up to 2 to filter out background parents
+            numPoses: 2
         });
 
         return poseLandmarker;
     }
 
     // -------------------------------------------------------------
-    // 3. TARGET FILTER: PICK CLOSEST FOREGROUND ATHLETE
+    // 3. TARGET ATHLETE FILTER
     // -------------------------------------------------------------
-    function selectPrimaryAthleteLandmarks(landmarksList, vW, vH) {
+    function selectPrimaryAthleteLandmarks(landmarksList) {
         if (!landmarksList || landmarksList.length === 0) return null;
         if (landmarksList.length === 1) return landmarksList[0];
 
-        // If multiple persons exist, calculate bounding area to pick the foreground athlete
-        let largestArea = 0;
-        let primaryPose = landmarksList[0];
+        let maxScore = 0;
+        let selectedPose = landmarksList[0];
 
         landmarksList.forEach(lm => {
             let minX = 1, maxX = 0, minY = 1, maxY = 0;
@@ -114,21 +113,18 @@
             });
 
             const area = (maxX - minX) * (maxY - minY);
-            // Bias toward person positioned lower/closer in viewport
-            const groundWeight = maxY;
-            const score = area * groundWeight;
-
-            if (score > largestArea) {
-                largestArea = score;
-                primaryPose = lm;
+            const score = area * maxY; // Foreground weight
+            if (score > maxScore) {
+                maxScore = score;
+                selectedPose = lm;
             }
         });
 
-        return primaryPose;
+        return selectedPose;
     }
 
     // -------------------------------------------------------------
-    // 4. VIEWPORT BUILD
+    // 4. VIEWPORT & DOM
     // -------------------------------------------------------------
     function buildClinicDOM() {
         container = document.getElementById('clinicStageContainer') || document.getElementById('sparrerPlaceholderView');
@@ -150,42 +146,94 @@
                     border-radius: 16px;
                     overflow: hidden;
                     background: #000;
-                    border: 1.5px solid #334155;
+                    border: 2px solid #334155;
                     box-shadow: 0 8px 24px rgba(0,0,0,0.7);
                 }
-                .clinic-video-feed { width: 100%; height: 100%; object-fit: cover; }
-                .clinic-canvas-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+                .clinic-video-feed {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    z-index: 1;
+                }
+                .clinic-canvas-layer {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: 5;
+                    pointer-events: none;
+                }
                 .clinic-countdown-badge {
-                    position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-                    background: rgba(15, 23, 42, 0.90); border: 1.5px solid #38bdf8;
-                    padding: 5px 16px; border-radius: 999px; font-size: 15px;
-                    font-weight: 800; color: #facc15; backdrop-filter: blur(6px); z-index: 10;
+                    position: absolute;
+                    top: 12px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(15, 23, 42, 0.92);
+                    border: 1.5px solid #38bdf8;
+                    padding: 6px 18px;
+                    border-radius: 999px;
+                    font-size: 15px;
+                    font-weight: 800;
+                    color: #facc15;
+                    backdrop-filter: blur(8px);
+                    z-index: 10;
                 }
                 .clinic-banner-bar {
-                    width: 100%; max-width: 640px; background: #0f172a;
-                    border: 1px solid #1e293b; border-radius: 12px; padding: 10px 14px;
-                    margin-top: 8px; text-align: center; font-size: 13.5px;
-                    font-weight: 700; color: #f8fafc;
+                    width: 100%;
+                    max-width: 640px;
+                    background: #0f172a;
+                    border: 1px solid #1e293b;
+                    border-radius: 12px;
+                    padding: 10px 14px;
+                    margin-top: 8px;
+                    text-align: center;
+                    font-size: 13.5px;
+                    font-weight: 700;
+                    color: #f8fafc;
                 }
                 .clinic-action-cluster {
-                    display: flex; gap: 10px; width: 100%; max-width: 640px; margin-top: 8px;
+                    display: flex;
+                    gap: 10px;
+                    width: 100%;
+                    max-width: 640px;
+                    margin-top: 8px;
                 }
                 .clinic-btn {
-                    flex: 1; height: 44px; border-radius: 10px; border: none;
-                    font-size: 13.5px; font-weight: 800; cursor: pointer; touch-action: manipulation;
+                    flex: 1;
+                    height: 46px;
+                    border-radius: 10px;
+                    border: none;
+                    font-size: 14px;
+                    font-weight: 800;
+                    cursor: pointer;
+                    touch-action: manipulation;
                 }
                 .btn-retry { background: #1e293b; border: 1.5px solid #38bdf8; color: #38bdf8; }
                 .btn-next  { background: #0284c7; color: #ffffff; }
                 .btn-download { background: #10b981; color: #ffffff; }
                 
                 .scorecard-panel {
-                    width: 100%; max-width: 640px; background: #0f172a; border: 1px solid #334155;
-                    border-radius: 14px; padding: 12px 16px; margin-top: 8px; display: none;
-                    flex-direction: column; gap: 6px;
+                    width: 100%;
+                    max-width: 640px;
+                    background: #0f172a;
+                    border: 1.5px solid #334155;
+                    border-radius: 14px;
+                    padding: 12px 16px;
+                    margin-top: 8px;
+                    display: none;
+                    flex-direction: column;
+                    gap: 6px;
                 }
                 .score-row {
-                    display: flex; justify-content: space-between; align-items: center;
-                    font-size: 13px; font-weight: 700; padding: 4px 0; border-bottom: 1px solid #1e293b;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: 13.5px;
+                    font-weight: 700;
+                    padding: 5px 0;
+                    border-bottom: 1px solid #1e293b;
                 }
             </style>
 
@@ -201,7 +249,7 @@
             </div>
 
             <div id="clinicInstructionBanner" class="clinic-banner-bar">
-                खेळाडूने पूर्ण शरीरासह ऑन-गार्द पोझिशनमध्ये ३ सेकंद स्थिर उभे राहावे.
+                खेळाडूने ऑन-गार्द पोझिशनमध्ये ३ सेकंद स्थिर उभे राहावे.
             </div>
 
             <div id="clinicSoftGateControls" class="clinic-action-cluster" style="display: none;">
@@ -209,7 +257,6 @@
                 <button class="clinic-btn btn-next" onclick="window.RivaClinic.proceedToLunge()">झेप सुरू करा ➔</button>
             </div>
 
-            <!-- Scorecard Panel -->
             <div id="clinicScorecard" class="scorecard-panel">
                 <div style="text-align:center; font-weight:800; color:#38bdf8; margin-bottom:4px;">🎯 संपूर्ण प्रगती अहवाल</div>
                 <div class="score-row"><span>१. पवित्रा आणि तोल (Stance)</span><span id="starStance">⭐⭐⭐</span></div>
@@ -248,6 +295,10 @@
         videoElement.srcObject = mediaStream;
         await videoElement.play();
 
+        syncCanvasDimensions();
+    }
+
+    function syncCanvasDimensions() {
         const vW = videoElement.videoWidth || 640;
         const vH = videoElement.videoHeight || 480;
         canvasOverlay.width = vW;
@@ -259,7 +310,7 @@
     }
 
     // -------------------------------------------------------------
-    // 5. VECTOR GEOMETRY
+    // 5. VECTOR MATH
     // -------------------------------------------------------------
     function calculateJointAngle(pA, pB, pC, vW, vH) {
         const ax = pA.x * vW, ay = pA.y * vH;
@@ -287,11 +338,13 @@
     }
 
     // -------------------------------------------------------------
-    // 6. PHASE 2: STATIC STANCE AUDIT
+    // 6. PHASE 2: STATIC STANCE
     // -------------------------------------------------------------
     function runStanceCountdown() {
         currentPhase = 'STANCE_COUNTDOWN';
         let count = 3;
+        syncCanvasDimensions();
+        
         const badge = document.getElementById('clinicCountdown');
         document.getElementById('clinicSoftGateControls').style.display = 'none';
         document.getElementById('clinicScorecard').style.display = 'none';
@@ -319,17 +372,18 @@
 
     function auditStaticEnGarde() {
         currentPhase = 'STANCE_AUDIT';
-        const vW = videoElement.videoWidth;
-        const vH = videoElement.videoHeight;
+        syncCanvasDimensions();
+        const vW = canvasOverlay.width;
+        const vH = canvasOverlay.height;
         canvasCtx.clearRect(0, 0, vW, vH);
 
         const now = performance.now();
         const result = poseLandmarker.detectForVideo(videoElement, now);
-        const lm = selectPrimaryAthleteLandmarks(result.landmarks, vW, vH);
+        const lm = selectPrimaryAthleteLandmarks(result.landmarks);
 
         if (!lm) {
-            document.getElementById('clinicInstructionBanner').innerText = 'खेळाडू कॅमेऱ्यात स्पष्ट दिसला नाही. कृपया फ्रेममध्ये फक्त १ खेळाडू ठेवा.';
-            speakCoachingCue('फ्रेममध्ये पूर्ण उभे राहा.');
+            document.getElementById('clinicInstructionBanner').innerText = 'खेळाडू कॅमेऱ्यात स्पष्ट दिसला नाही.';
+            speakCoachingCue('कॅमेऱ्यासमोर पूर्ण उभे राहा.');
             document.getElementById('clinicSoftGateControls').style.display = 'flex';
             return;
         }
@@ -380,7 +434,7 @@
             speakCoachingCue('हात छातीच्या रेषेत ठेवा!');
         } else {
             banner.innerText = '✅ उत्तम मूलभूत स्थिती! आता रॉकेट लंज मारा.';
-            speakCoachingCue('छान स्थिती! आता लंज मारा.');
+            speakCoachingCue('छान पोझिशन! आता लंज मारा.');
         }
 
         document.getElementById('clinicCountdown').innerText = 'स्थिती नोंदवली!';
@@ -389,16 +443,16 @@
 
     function drawJointPoint(lm, vW, vH, isValid) {
         canvasCtx.beginPath();
-        canvasCtx.arc(lm.x * vW, lm.y * vH, 11, 0, 2 * Math.PI);
-        canvasCtx.lineWidth = 3;
+        canvasCtx.arc(lm.x * vW, lm.y * vH, 12, 0, 2 * Math.PI);
+        canvasCtx.lineWidth = 3.5;
         canvasCtx.strokeStyle = isValid ? '#22c55e' : '#ef4444';
-        canvasCtx.fillStyle = isValid ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.4)';
+        canvasCtx.fillStyle = isValid ? 'rgba(34, 197, 94, 0.35)' : 'rgba(239, 68, 68, 0.45)';
         canvasCtx.fill();
         canvasCtx.stroke();
     }
 
     // -------------------------------------------------------------
-    // 7. PHASE 3: DYNAMIC LUNGE TRACKER
+    // 7. PHASE 3: DYNAMIC LUNGE TRACKER & LIVE HUD
     // -------------------------------------------------------------
     function proceedToLunge() {
         currentPhase = 'LUNGE_TRACKING';
@@ -407,6 +461,7 @@
         peakFrameData = null;
         lungePhaseStartTime = performance.now();
 
+        syncCanvasDimensions();
         document.getElementById('clinicSoftGateControls').style.display = 'none';
         canvasCtx.clearRect(0, 0, canvasOverlay.width, canvasOverlay.height);
 
@@ -425,16 +480,17 @@
 
         const now = performance.now();
 
-        if (now - lastFrameTime >= 66) {
+        if (now - lastFrameTime >= 66) { // 15 FPS throttle
             lastFrameTime = now;
             processLungeFrame(now);
         }
 
-        // 5-second automatic fallback lock
+        // 5-second auto fallback
         if (now - lungePhaseStartTime > 5000) {
             if (coordinateBuffer.length > 0) {
+                cancelAnimationFrame(animFrameId);
                 currentPhase = 'REPORT';
-                evaluateAndGenerateReport(videoElement.videoWidth, videoElement.videoHeight);
+                evaluateAndGenerateReport(canvasOverlay.width, canvasOverlay.height);
                 return;
             }
         }
@@ -443,21 +499,22 @@
     }
 
     function processLungeFrame(timestamp) {
-        const vW = videoElement.videoWidth;
-        const vH = videoElement.videoHeight;
+        const vW = canvasOverlay.width;
+        const vH = canvasOverlay.height;
 
+        // Circular buffer
         const currentSlotCtx = (activeSnapshotSlot === 0) ? snapshotCtxA : snapshotCtxB;
         currentSlotCtx.drawImage(videoElement, 0, 0, vW, vH);
         activeSnapshotSlot = (activeSnapshotSlot === 0) ? 1 : 0;
 
         const result = poseLandmarker.detectForVideo(videoElement, timestamp);
-        const lm = selectPrimaryAthleteLandmarks(result.landmarks, vW, vH);
+        const lm = selectPrimaryAthleteLandmarks(result.landmarks);
         if (!lm) return;
 
         coordinateBuffer.push({ t: timestamp, lm });
         if (coordinateBuffer.length > MAX_BUFFER_FRAMES) coordinateBuffer.shift();
 
-        // Real-time tracking HUD
+        // LIVE HUD: Render high-visibility neon-cyan dots on athlete joints
         canvasCtx.clearRect(0, 0, vW, vH);
         const leadWrist = baselineData.isRightFacing ? lm[16] : lm[15];
         const leadKnee  = baselineData.isRightFacing ? lm[26] : lm[25];
@@ -466,12 +523,15 @@
 
         [leadWrist, leadKnee, leadAnkle, rearAnkle].forEach(pt => {
             canvasCtx.beginPath();
-            canvasCtx.arc(pt.x * vW, pt.y * vH, 7, 0, 2 * Math.PI);
-            canvasCtx.fillStyle = '#38bdf8';
+            canvasCtx.arc(pt.x * vW, pt.y * vH, 9, 0, 2 * Math.PI);
+            canvasCtx.fillStyle = '#00f0ff';
+            canvasCtx.shadowColor = '#00f0ff';
+            canvasCtx.shadowBlur = 8;
             canvasCtx.fill();
+            canvasCtx.shadowBlur = 0;
         });
 
-        // Track peak extension
+        // Compute current extension span
         const currWristX = leadWrist.x * vW;
         const rearAnkleX = rearAnkle.x * vW;
         const currentExtensionSpan = Math.abs(currWristX - rearAnkleX);
@@ -484,8 +544,8 @@
             };
         }
 
-        // Trigger condition: Extension crosses baseline and recoils by 3%
-        const baselineGate = baselineData.stanceWidth * 1.15;
+        // Peak trigger: Crosses 112% baseline stance and starts pulling back
+        const baselineGate = baselineData.stanceWidth * 1.12;
         if (maxExtensionRecorded > baselineGate && currentExtensionSpan < (maxExtensionRecorded * 0.97)) {
             cancelAnimationFrame(animFrameId);
             currentPhase = 'REPORT';
@@ -494,7 +554,7 @@
     }
 
     // -------------------------------------------------------------
-    // 8. PHASE 4: SCORECARD & FEEDBACK
+    // 8. PHASE 4: CONSOLIDATED REPORT
     // -------------------------------------------------------------
     function evaluateAndGenerateReport(vW, vH) {
         const chosenCanvas = (peakFrameData && peakFrameData.slotIndex === 0) ? snapshotCanvasA : snapshotCanvasB;
@@ -528,17 +588,17 @@
             if (midAnkleDelta > midWristDelta) sequenceStars = 1;
         }
 
-        // 2. Knee Over Ankle Shear
+        // 2. Knee Shear
         const kneeX = leadKnee.x * vW;
         const ankleX = leadAnkle.x * vW;
         const anteriorShear = (kneeX - ankleX) * dir;
         const isKneeSheared = anteriorShear > (vW * 0.05);
 
-        // 3. Rear Foot Lift
+        // 3. Rear Ankle Lift
         const rearAnkleY = rearAnkle.y * vH;
         const rearFootLifted = (baselineData.rearAnkleBaselineY - rearAnkleY) > (vH * 0.07);
 
-        // 4. Torso Lean
+        // 4. Torso Pitch
         const torsoAngle = calculateJointAngle({ x: hip.x, y: 0 }, hip, shoulder, vW, vH);
         const isTorsoOverleaning = torsoAngle > 22;
 
@@ -550,7 +610,7 @@
         drawVectorLine(hip, leadKnee, vW, vH);
         drawVectorLine(leadKnee, leadAnkle, vW, vH);
 
-        // Prioritized Fault Highlight
+        // Red Ring on Worst Fault
         let primaryCue = 'उत्कृष्ट रॉकेट झेप! तोल आणि वेग अचूक.';
         let faultPoint = null;
 
@@ -570,13 +630,12 @@
 
         if (faultPoint) {
             canvasCtx.beginPath();
-            canvasCtx.arc(faultPoint.x * vW, faultPoint.y * vH, 18, 0, 2 * Math.PI);
-            canvasCtx.lineWidth = 4;
+            canvasCtx.arc(faultPoint.x * vW, faultPoint.y * vH, 20, 0, 2 * Math.PI);
+            canvasCtx.lineWidth = 4.5;
             canvasCtx.strokeStyle = '#ef4444';
             canvasCtx.stroke();
         }
 
-        // Render UI
         const banner = document.getElementById('clinicInstructionBanner');
         banner.innerText = primaryCue;
         speakCoachingCue(primaryCue);
@@ -596,7 +655,7 @@
         canvasCtx.beginPath();
         canvasCtx.moveTo(p1.x * vW, p1.y * vH);
         canvasCtx.lineTo(p2.x * vW, p2.y * vH);
-        canvasCtx.lineWidth = 3.5;
+        canvasCtx.lineWidth = 4;
         canvasCtx.strokeStyle = '#22c55e';
         canvasCtx.stroke();
     }
