@@ -23,7 +23,7 @@
             overflow-x: hidden;
         }
 
-        /* 1-100 NUMERIC CATALOG */
+        /* NUMERIC CATALOG */
         .catalog-stage {
             display: flex;
             flex-direction: column;
@@ -287,7 +287,7 @@
             box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
         }
 
-        /* DYNAMIC QUICK JUMP DRAWER */
+        /* DRAWER OVERLAY */
         .drawer-overlay {
             position: fixed; inset: 0; background: rgba(4, 7, 13, 0.78);
             backdrop-filter: blur(6px); z-index: 900;
@@ -314,59 +314,19 @@
 
         /* ZERO-SCROLL LANDSCAPE */
         @media (orientation: landscape) and (max-height: 520px) {
-            .arena-stage {
-                padding: 4px 8px 6px;
-                justify-content: space-between;
-            }
-            .top-header {
-                height: 32px;
-                margin-bottom: 2px;
-            }
-            .header-title-pill {
-                padding: 4px 12px;
-                font-size: 12px;
-            }
-            .timer-ring-container, .timer-ring-svg {
-                width: 32px;
-                height: 32px;
-            }
+            .arena-stage { padding: 4px 8px 6px; justify-content: space-between; }
+            .top-header { height: 32px; margin-bottom: 2px; }
+            .header-title-pill { padding: 4px 12px; font-size: 12px; }
+            .timer-ring-container, .timer-ring-svg { width: 32px; height: 32px; }
             .timer-label { font-size: 10px; }
-
-            .canvas-host {
-                width: auto;
-                height: calc(100dvh - 128px);
-                max-width: 100%;
-                aspect-ratio: 820 / 420;
-                margin: 0 auto;
-            }
-
-            .coach-feedback-box {
-                padding: 4px 8px;
-                margin-top: 2px;
-            }
-            #status-box {
-                min-height: 18px;
-                font-size: 12px;
-            }
+            .canvas-host { width: auto; height: calc(100dvh - 128px); max-width: 100%; aspect-ratio: 820 / 420; margin: 0 auto; }
+            .coach-feedback-box { padding: 4px 8px; margin-top: 2px; }
+            #status-box { min-height: 18px; font-size: 12px; }
             .hint-bar { font-size: 10px; }
-
-            .controls-dock {
-                padding: 4px 10px;
-                margin-top: 2px;
-            }
-            .nav-step-btn {
-                padding: 6px 12px;
-                min-width: 80px;
-                font-size: 12px;
-            }
-            .action-icon-btn {
-                width: 34px;
-                height: 34px;
-            }
-            .play-hero-btn {
-                width: 38px;
-                height: 38px;
-            }
+            .controls-dock { padding: 4px 10px; margin-top: 2px; }
+            .nav-step-btn { padding: 6px 12px; min-width: 80px; font-size: 12px; }
+            .action-icon-btn { width: 34px; height: 34px; }
+            .play-hero-btn { width: 38px; height: 38px; }
         }
 
         /* ONBOARDING MODAL */
@@ -475,7 +435,7 @@
         </nav>
     </div>
 
-    <!-- DYNAMIC QUICK-JUMP SUB-DRILL DRAWER -->
+    <!-- DYNAMIC DRAWER -->
     <div id="subDrillDrawer" class="drawer-overlay" style="display: none;" onclick="toggleSubDrillDrawer(false)">
         <div class="drawer-card" onclick="event.stopPropagation()">
             <div class="drawer-title">सराव भाग निवडा (Select Sub-Drill)</div>
@@ -508,22 +468,42 @@
     </div>
 
 <script>
-// ACTIVATING DRILLS 1 AND 2
-const AVAILABLE_DRILLS = [1, 2];
 let currentCartridge = null;
 
-function buildCatalog() {
+// 1. AUTO-DETECT CATALOG PIPELINE (DISCOVERS DRILLS DYNAMICALLY)
+async function autoDetectCatalog() {
     const container = document.getElementById('numericGridContainer');
     container.innerHTML = '';
-    AVAILABLE_DRILLS.forEach(n => {
+    let foundAny = false;
+    let id = 1;
+
+    while (id <= 100) {
+        const file = `drills/drill_${String(id).padStart(3, '0')}.js`;
+        try {
+            const res = await fetch(file, { method: 'HEAD' });
+            if (!res.ok) break; // Stops cleanly when next file is not found
+            addCard(id);
+            foundAny = true;
+            id++;
+        } catch (e) {
+            break;
+        }
+    }
+
+    // Safety fallback for local file execution or offline caching
+    if (!foundAny) {
+        [1, 2].forEach(n => addCard(n));
+    }
+
+    function addCard(n) {
         const c = document.createElement('div');
         c.className = 'num-card';
         c.innerText = n;
         c.onclick = () => loadDrill(n);
         container.appendChild(c);
-    });
+    }
 }
-buildCatalog();
+autoDetectCatalog();
 
 function loadDrill(id) {
     document.getElementById('catalogView').style.display = 'none';
@@ -547,18 +527,31 @@ function loadCartridge(id) {
         if (window.RivaCartridge) {
             currentCartridge = window.RivaCartridge;
             currentCartridge.init();
-            buildSubDrillDrawer();
+            buildSubDrillDrawer(id);
             setPlayState(true);
         }
     };
     document.body.appendChild(s);
 }
 
-function buildSubDrillDrawer() {
+// 2. DEFENSIVE SELF-HEALING DRAWER BUILDER
+const FALLBACK_DRILL_1_TITLES = [
+    "१. 'L' पोझिशन", "२. एन गार्डे", "३. पाऊल क्रम", "४. लेझर टिप",
+    "५. अटॅक", "६. रॉकेट लंज", "७. पॅरी ४", "८. पॅरी ६"
+];
+
+function buildSubDrillDrawer(loadedDrillId) {
     const grid = document.getElementById('drawerGrid');
-    if (!grid || !currentCartridge || !currentCartridge.subDrills) return;
+    if (!grid || !currentCartridge) return;
     grid.innerHTML = '';
-    currentCartridge.subDrills.forEach((title, idx) => {
+
+    // If cartridge has subDrills, use them; otherwise, provide default titles
+    let list = currentCartridge.subDrills;
+    if (!list || list.length === 0) {
+        list = (loadedDrillId === 1 || !loadedDrillId) ? FALLBACK_DRILL_1_TITLES : [];
+    }
+
+    list.forEach((title, idx) => {
         const btn = document.createElement('button');
         btn.className = 'drawer-item-btn';
         btn.innerText = title;
@@ -601,7 +594,7 @@ function triggerAudioToggle() {
     document.getElementById('audioMuteIcon').style.display = isMuted ? 'block' : 'none';
 }
 
-// TAP-VS-HOLD GESTURE PIPELINE
+// TAP-VS-HOLD GESTURE ENGINE
 function setupReliableStepHoldButton(config) {
     const { btnId, labelId, normalText, activeHoldText, activeClass, onSingleTap, onHoldStart, onHoldEnd } = config;
     const el = document.getElementById(btnId);
@@ -665,8 +658,8 @@ setupReliableStepHoldButton({
     activeHoldText: '🐢 ०.२५x',
     activeClass: 'holding-slow',
     onSingleTap: () => { if (currentCartridge) currentCartridge.prevSubDrill(); },
-    onHoldStart: () => { if (currentCartridge) currentCartridge.setSpeed(0.25); },
-    onHoldEnd:   () => { if (currentCartridge) currentCartridge.setSpeed(1.0); }
+    onHoldStart: () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(0.25); },
+    onHoldEnd:   () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(1.0); }
 });
 
 setupReliableStepHoldButton({
@@ -676,8 +669,8 @@ setupReliableStepHoldButton({
     activeHoldText: '⚡ २.५x',
     activeClass: 'holding-fast',
     onSingleTap: () => { if (currentCartridge) currentCartridge.nextSubDrill(); },
-    onHoldStart: () => { if (currentCartridge) currentCartridge.setSpeed(2.5); },
-    onHoldEnd:   () => { if (currentCartridge) currentCartridge.setSpeed(1.0); }
+    onHoldStart: () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(2.5); },
+    onHoldEnd:   () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(1.0); }
 });
 
 // BIOMETRICS PROFILE STORAGE
