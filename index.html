@@ -368,7 +368,7 @@
         }
 
         /* ------------------------------------------------------------- */
-        /* VIEW 4: SPARRER ENGINE PREVIEW                                */
+        /* VIEW 4: SPARRER ENGINE MOUNTING STAGE                         */
         /* ------------------------------------------------------------- */
         .sparrer-placeholder-stage {
             display: flex;
@@ -392,7 +392,7 @@
         .sparrer-desc { font-size: 13.5px; color: #94a3b8; line-height: 1.5; max-width: 360px; }
 
         /* ------------------------------------------------------------- */
-        /* UNIVERSAL BOTTOM ANCHOR                                       */
+        /* UNIVERSAL BOTTOM ANCHOR (PORTRAIT ONLY)                       */
         /* ------------------------------------------------------------- */
         .universal-dock {
             position: fixed;
@@ -696,14 +696,14 @@
     </section>
 
     <!-- ------------------------------------------------------------- -->
-    <!-- VIEW 4: SPARRER ENGINE PREVIEW                                -->
+    <!-- VIEW 4: SPARRER ENGINE MOUNTING STAGE                         -->
     <!-- ------------------------------------------------------------- -->
     <section id="sparrerPlaceholderView" class="sparrer-placeholder-stage" style="display: none;">
         <div class="sparrer-icon-box">⚡</div>
         <h2 class="sparrer-title">आव्हान (Reaction Sparrer)</h2>
         <p class="sparrer-desc">
             १०-फूट अ‍ॅम्बियंट व्हिजन संकेत (हिरवा: पुढे, निळा: मागे, अंबर: 'थांबा!' ब्रेक).
-            मायक्रो-बर्स्ट बाऊट इंजिन पुढील टप्प्यात सक्रिय होईल.
+            मायक्रो-बर्स्ट बाऊट इंजिन लोड होत आहे...
         </p>
         <button class="back-portal-btn" onclick="goHome()" style="padding:10px 20px; font-size:13.5px; margin-top:8px;">
             ← मुख्य पोर्टलवर परत जा
@@ -813,13 +813,14 @@ document.addEventListener('visibilitychange', () => {
 requestScreenWake();
 
 // -------------------------------------------------------------
-// UNIVERSAL ESCAPE SWITCH
+// UNIVERSAL ESCAPE SWITCH (MASTER KILL SWITCH)
 // -------------------------------------------------------------
 let currentCartridge = null;
 
 function goHome() {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     if (currentCartridge && currentCartridge.stop) currentCartridge.stop();
+    if (window.RivaSparrer && window.RivaSparrer.stop) window.RivaSparrer.stop();
 
     document.getElementById('arenaView').style.display = 'none';
     document.getElementById('catalogView').style.display = 'none';
@@ -841,6 +842,15 @@ function openReactionSparrer() {
     primeAudioOnUserGesture();
     document.getElementById('portalView').style.display = 'none';
     document.getElementById('sparrerPlaceholderView').style.display = 'flex';
+
+    if (!window.RivaSparrer) {
+        const s = document.createElement('script');
+        s.src = 'sparrer.js';
+        s.onload = () => window.RivaSparrer.init();
+        document.body.appendChild(s);
+    } else {
+        window.RivaSparrer.init();
+    }
 }
 
 function backToCatalog() {
@@ -858,7 +868,7 @@ function primeAudioOnUserGesture() {
 }
 
 // -------------------------------------------------------------
-// DYNAMIC CARTRIDGE AUTO-DISCOVERY
+// DYNAMIC CARTRIDGE AUTO-DISCOVERY (PORTAL 1)
 // -------------------------------------------------------------
 async function autoDetectCatalog() {
     const container = document.getElementById('numericGridContainer');
