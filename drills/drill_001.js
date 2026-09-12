@@ -1,6 +1,6 @@
 /**
- * Riva Fencer - Cartridge 001 (Try #2)
- * Cleaned canvas HUD (duplicate clock removed), natural Marathi speech, and unified stepping/scrubbing.
+ * Riva Fencer - Cartridge 001 (Try #3)
+ * Dynamic rate playback (0.25x to 2.5x), live rate HUD indicator, single-clock sync, natural speech.
  */
 (function () {
     const canvas = document.getElementById('fencingCanvas');
@@ -310,7 +310,7 @@
     let currentDrill = 0;
     let currentSubPhase = -1;
 
-    // SCREEN PRESS-AND-HOLD SLOW-MOTION
+    // SCREEN TOUCH-HOLD SLOW-MOTION
     let pointerDownTime = 0;
     let holdTimeout = null;
 
@@ -1486,7 +1486,7 @@
     }
 
     // -------------------------------------------------------------
-    // ANIMATION LOOP (IN-CANVAS CLOCK REMOVED)
+    // ANIMATION LOOP
     // -------------------------------------------------------------
     function render() {
         const now = performance.now();
@@ -1521,6 +1521,17 @@
         drawActiveErrorReticles();
         updateAndDrawRipples();
         restoreCameraTransform();
+
+        // WATERMARK RATE BADGE (SHOWN ONLY WHEN ACTIVE SPEED != 1.0)
+        const activeSpeed = isSlowMoHold ? 0.25 : currentPlaybackSpeed;
+        if (activeSpeed !== 1.0) {
+            ctx.save();
+            ctx.fillStyle = activeSpeed < 1.0 ? '#f59e0b' : '#38bdf8';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(activeSpeed < 1.0 ? "🐢 ०.२५x स्लो-मोशन" : "⚡ २.५x जलद फॉरवर्ड", BASE_WIDTH - 24, 28);
+            ctx.restore();
+        }
 
         requestAnimationFrame(render);
     }
