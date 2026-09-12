@@ -1,15 +1,19 @@
 /**
  * Riva Fencer - Cartridge 001
- * Untouched Biomechanics & IK from Riva Drill 1.html
+ * Preserves exact original IK, connects SVG stopwatch, cleans Marathi TTS, and hooks Prev/Next subdrills.
  */
 (function () {
     const canvas = document.getElementById('fencingCanvas');
     const ctx = canvas.getContext('2d');
     const statusBox = document.getElementById('status-box');
+    const drillHeaderBadge = document.getElementById('drillHeaderBadge');
+    const timerNumber = document.getElementById('timer-number');
+    const timerProgress = document.getElementById('timerProgress');
 
     const BASE_WIDTH = 820;
     const BASE_HEIGHT = 420;
     const GROUND_Y = 312;
+    const DRILL_DURATION = 30000;
 
     function setupHiDPI() {
         const dpr = window.devicePixelRatio || 1;
@@ -28,7 +32,7 @@
     }
 
     // -------------------------------------------------------------
-    // WEAKNESS 1: SPATIAL HIT-TESTING & ERROR RETICLE REGISTRY
+    // RETICLE & TAP CORRECTION ENGINE
     // -------------------------------------------------------------
     let activeErrorZones = [];
     let visualRipples = [];
@@ -122,7 +126,7 @@
     }
 
     // -------------------------------------------------------------
-    // WEAKNESS 2: HIT-STOP & DYNAMIC SCREEN SHAKE ENGINE
+    // HIT-STOP & CAMERA SHAKE
     // -------------------------------------------------------------
     let hitStopUntil = 0;
     let screenShakeRemaining = 0;
@@ -155,43 +159,24 @@
     }
 
     // -------------------------------------------------------------
-    // AUDIO ENGINE
+    // NATURAL MARATHI TTS ENGINE
     // -------------------------------------------------------------
+    let isMuted = false;
     let audioUnlocked = false;
-    let isMutedLocally = false;
-    const speechEngine = { marathiVoice: null, englishVoice: null, mode: 'mr' };
+    let availableVoices = [];
 
     function initAudio() {
         audioUnlocked = true;
         requestWakeLock();
-        auditVoices();
-    }
-
-    function auditVoices() {
-        if (!('speechSynthesis' in window)) return;
-        const voices = window.speechSynthesis.getVoices();
-        if (!voices || voices.length === 0) return;
-
-        speechEngine.marathiVoice = voices.find(v => v.lang.toLowerCase().includes('mr')) || null;
-        const hindiVoice = voices.find(v => v.lang.toLowerCase().includes('hi')) || null;
-        speechEngine.englishVoice = voices.find(v => v.lang.toLowerCase().includes('en-in'))
-                                  || voices.find(v => v.lang.toLowerCase().includes('en-gb'))
-                                  || voices.find(v => v.lang.toLowerCase().includes('en-us'))
-                                  || voices[0];
-
-        if (speechEngine.marathiVoice) {
-            speechEngine.mode = 'mr';
-        } else if (hindiVoice) {
-            speechEngine.marathiVoice = hindiVoice;
-            speechEngine.mode = 'hi';
-        } else {
-            speechEngine.mode = 'en';
+        if ('speechSynthesis' in window) {
+            availableVoices = window.speechSynthesis.getVoices() || [];
         }
     }
 
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = auditVoices;
-        auditVoices();
+        window.speechSynthesis.onvoiceschanged = () => {
+            availableVoices = window.speechSynthesis.getVoices() || [];
+        };
     }
 
     function getPersonalized(str) {
@@ -199,17 +184,36 @@
         return str.replaceAll('रीवा', saved.name);
     }
 
-    function speakCoachingCue(marathiString, englishTranslation) {
-        if (!('speechSynthesis' in window) || !audioUnlocked || isMutedLocally) return;
+    function speakCoachingCue(marathiString) {
+        if (!('speechSynthesis' in window) || !audioUnlocked || isMuted) return;
         window.speechSynthesis.cancel();
 
-        let textToSpeak = (speechEngine.mode === 'en') ? englishTranslation : getPersonalized(marathiString);
-        let selectedVoice = (speechEngine.mode === 'en') ? speechEngine.englishVoice : speechEngine.marathiVoice;
+        const cleanMarathi = getPersonalized(marathiString)
+            .replace(/[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{2600}-\u{27BF}]/gu, '')
+            .replace(/[➔➡️⬅️⚡💡🐢⭐⏱️🔊⏸️🚀🤺📐🦶🦵✓❌✅🎯]/g, '')
+            .replace(/[()[\]{}|]/g, '')
+            .replace(/[०-९0-9]+[.]?[०-९0-9]*/g, '')
+            .replace(/['"]/g, '')
+            .trim();
 
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        if (selectedVoice) utterance.voice = selectedVoice;
-        utterance.rate = (speechEngine.mode === 'en') ? 0.92 : 0.86;
-        utterance.pitch = 1.05;
+        if (!cleanMarathi) return;
+
+        const utterance = new SpeechSynthesisUtterance(cleanMarathi);
+        const marathiVoice = availableVoices.find(v => v.lang.toLowerCase().includes('mr')) || null;
+        const hindiVoice = availableVoices.find(v => v.lang.toLowerCase().includes('hi')) || null;
+        
+        if (marathiVoice) {
+            utterance.voice = marathiVoice;
+            utterance.lang = 'mr-IN';
+        } else if (hindiVoice) {
+            utterance.voice = hindiVoice;
+            utterance.lang = 'hi-IN';
+        } else {
+            utterance.lang = 'mr-IN';
+        }
+
+        utterance.rate = 0.88;
+        utterance.pitch = 1.0;
         window.speechSynthesis.speak(utterance);
     }
 
@@ -218,133 +222,95 @@
     }
 
     // -------------------------------------------------------------
-    // ORIGINAL 8 SUB-DRILL TIMELINES
+    // 8 SUB-DRILL DEFINITIONS
     // -------------------------------------------------------------
-    const DRILL_DURATION = 30000;
     const drillTimelineConfigs = [
         {
             drillId: 0,
-            title: "📐 १. पायांची अचूक 'L' पोझिशन",
+            title: "१. 'L' पोझिशन",
             phases: [
-                { startTime: 0, subPhase: 0, marathiText: "दोन्ही पावले जवळ ठेवा आणि सरळ उभे राहा.", englishText: "Stand upright with both feet together.", status: "१. दोन्ही पावले जवळ जोडून ताठ उभे राहा. (लाल त्रुटीवर टॅप करा)", color: "#ef4444" },
-                { startTime: 9000, subPhase: 1, marathiText: "मागचा पाय नव्वद अंशात फिरवून एल आकार बनवा.", englishText: "Turn the rear foot 90 degrees to form an L.", status: "२. पुढचा पाय सरळ ठेवून, मागचा पाय ९० अंशात फिरवा ('L' आकार)!", color: "#facc15" },
-                { startTime: 18000, subPhase: 2, marathiText: "शाब्बास रीवा, अचूक एल पोझिशन तयार झाली आहे!", englishText: "Excellent Riva, perfect L-stance base achieved!", status: "✅ अचूक 'L' कोन आणि खांद्याइतके नैसर्गिक अंतर पूर्ण!", color: "#22c55e" }
+                { startTime: 0, subPhase: 0, marathiText: "दोन्ही पावले जवळ ठेवा आणि सरळ उभे राहा.", status: "१. दोन्ही पावले जवळ जोडून ताठ उभे राहा. (लाल त्रुटीवर टॅप करा)", color: "#ef4444" },
+                { startTime: 9000, subPhase: 1, marathiText: "मागचा पाय नव्वद अंशात फिरवून एल आकार बनवा.", status: "२. पुढचा पाय सरळ ठेवून, मागचा पाय ९० अंशात फिरवा ('L' आकार)!", color: "#facc15" },
+                { startTime: 18000, subPhase: 2, marathiText: "शाब्बास रीवा, अचूक एल पोझिशन तयार झाली आहे!", status: "✅ अचूक 'L' कोन आणि नैसर्गिक अंतर पूर्ण!", color: "#22c55e" }
             ]
         },
         {
             drillId: 1,
-            title: "🦵 २. योग्य एन गार्डे – समतोल गुडघे वाकवणे",
+            title: "२. एन गार्डे",
             phases: [
-                { startTime: 0, subPhase: 0, marathiText: "पाय ताठ ठेवू नका, तोल जातो. गुडघे वाकवा.", englishText: "Do not lock your knees. Bend your legs.", status: "❌ चूक: पाय ताठ ठेवल्यास शरीराची चपळता संपते! (गुडघ्यावर टॅप करा)", color: "#ef4444" },
-                { startTime: 10000, subPhase: 1, marathiText: "गुडघे हलके वाकवून एन गार्डे स्प्रिंग करा.", englishText: "Bend knees 110 degrees like loaded springs.", status: "✅ योग्य एन गार्डे: गुडघे ११०°-१२०° किंचित वाकवून स्प्रिंगसारखे तयार ठेवा!", color: "#22c55e" }
+                { startTime: 0, subPhase: 0, marathiText: "पाय ताठ ठेवू नका. गुडघे वाकवा.", status: "❌ चूक: पाय ताठ ठेवल्यास तोल जातो! (गुडघ्यावर टॅप करा)", color: "#ef4444" },
+                { startTime: 10000, subPhase: 1, marathiText: "गुडघे हलके वाकवून एन गार्डे स्प्रिंग करा.", status: "✅ योग्य एन गार्डे: गुडघे ११०° किंचित वाकवून स्प्रिंगसारखे ठेवा!", color: "#22c55e" }
             ]
         },
         {
             drillId: 2,
-            title: "🦶 ३. पाऊल क्रम (पुढे: टाच ➔ चवडा | मागे: चवडा ➔ टाच)",
+            title: "३. पाऊल क्रम",
             phases: [
-                { startTime: 0, subPhase: 0, marathiText: "पुढे जाताना: आधी पुढची टाच, मग मागचा पाय.", englishText: "Advancing: front heel touches first, then rear foot.", status: "➡️ पुढे: पुढचा पाय लीडर (आधी टाच ➔ मग चवडा टेकवा)!", color: "#38bdf8" },
-                { startTime: 11000, subPhase: 1, marathiText: "मागे येताना: आधी मागचा चवडा, मग पुढचा पाय.", englishText: "Retreating: rear ball of foot touches first, then heel.", status: "⬅️ मागे: मागचा पाय लीडर (आधी चवडा ➔ मग टाच टेकवा)!", color: "#4ade80" },
-                { startTime: 22000, subPhase: 2, marathiText: "शाब्बास रीवा, पाऊल क्रम परिपूर्ण!", englishText: "Well done Riva! Perfect rhythmic foot sequence!", status: "🎯 शाब्बास रीवा! पाऊल क्रम १०० टक्के परिपूर्ण!", color: "#22c55e" }
+                { startTime: 0, subPhase: 0, marathiText: "पुढे जाताना आधी पुढची टाच, मग मागचा पाय.", status: "➡️ पुढे: पुढचा पाय लीडर (आधी टाच ➔ मग चवडा टेकवा)!", color: "#38bdf8" },
+                { startTime: 11000, subPhase: 1, marathiText: "मागे येताना आधी मागचा चवडा, मग पुढचा पाय.", status: "⬅️ मागे: मागचा पाय लीडर (आधी चवडा ➔ मग टाच टेकवा)!", color: "#4ade80" },
+                { startTime: 22000, subPhase: 2, marathiText: "शाब्बास रीवा, पाऊल क्रम परिपूर्ण!", status: "🎯 शाब्बास रीवा! पाऊल क्रम १०० टक्के परिपूर्ण!", color: "#22c55e" }
             ]
         },
         {
             drillId: 3,
-            title: "🎯 ४. लेझर टिप – टोक छातीवर रोखा",
+            title: "४. लेझर टिप",
             phases: [
-                { startTime: 0, subPhase: 0, marathiText: "मनगट स्थिर करा, टोक छताकडे जाऊ देऊ नका.", englishText: "Stabilize wrist! Keep the point directed at the chest.", status: "❌ चूक: टोक छताकडे गेले आहे! (मनगटावर टॅप करून टोक सरळ करा)", color: "#ef4444" },
-                { startTime: 8000, subPhase: 1, marathiText: "पुढे चालतानाही टोक छातीवर रोखून ठेवा.", englishText: "Advance while keeping the laser point locked on chest.", status: "🦶 पुढे चालतानाही लेझर टोक छातीवरून हलू देऊ नका (टाच ➔ चवडा)!", color: "#38bdf8" },
-                { startTime: 18000, subPhase: 2, marathiText: "मागे सरकतानाही अचूक लेझर लॉक!", englishText: "Retreating with absolute laser point discipline!", status: "🎯 मागे सरकतानाही लेझर थेट छातीवर १००% लॉक! उत्कृष्ट तोल!", color: "#22c55e" }
+                { startTime: 0, subPhase: 0, marathiText: "मनगट स्थिर करा, टोक छताकडे जाऊ देऊ नका.", status: "❌ चूक: टोक छताकडे गेले आहे! (मनगटावर टॅप करा)", color: "#ef4444" },
+                { startTime: 8000, subPhase: 1, marathiText: "पुढे चालतानाही टोक छातीवर रोखून ठेवा.", status: "🦶 पुढे चालतानाही लेझर टोक छातीवर रोखून ठेवा!", color: "#38bdf8" },
+                { startTime: 18000, subPhase: 2, marathiText: "मागे सरकतानाही अचूक लेझर लॉक!", status: "🎯 मागे सरकतानाही लेझर थेट छातीवर १००% लॉक!", color: "#22c55e" }
             ]
         },
         {
             drillId: 4,
-            title: "🤺 ५. बेसिक अटॅक – आधी हात ➔ मग पाऊल",
+            title: "५. अटॅक",
             phases: [
-                { startTime: 0, subPhase: 0, marathiText: "एन गार्डे तयार राहा.", englishText: "En Garde, ready to initiate attack.", status: "१. एन गार्डे तयार राहा - कोपर शरीराच्या समोर.", color: "#38bdf8" },
-                { startTime: 6000, subPhase: 1, marathiText: "हात आधी... मग पाय स्फोटक पुढे!", englishText: "Arm extends first for Right of Way, then explosive advance!", status: "२. आधी हात निघून रेषेत (Right of Way) ➔ मग पाय वेगाने जमिनीवर!", color: "#facc15" },
-                { startTime: 17500, subPhase: 2, marathiText: "टच! तोल स्थिर ठेवा.", englishText: "Touch! Hold point on target for 1 second.", status: "🎯 अचूक पॉईंट! डमीवर स्पर्श १ सेकंद स्थिर ठेवा!", color: "#22c55e" },
-                { startTime: 21500, subPhase: 3, marathiText: "सुरक्षित मागे या.", englishText: "Recover smoothly back to En Garde.", status: "३. सुरक्षित एन गार्डेवर रिकव्हर व्हा.", color: "#38bdf8" }
+                { startTime: 0, subPhase: 0, marathiText: "एन गार्डे तयार राहा.", status: "१. एन गार्डे तयार राहा - कोपर शरीराच्या समोर.", color: "#38bdf8" },
+                { startTime: 6000, subPhase: 1, marathiText: "हात आधी... मग पाय स्फोटक पुढे!", status: "२. आधी हात निघून रेषेत ➔ मग पाय वेगाने जमिनीवर!", color: "#facc15" },
+                { startTime: 17500, subPhase: 2, marathiText: "टच! तोल स्थिर ठेवा.", status: "🎯 अचूक पॉईंट! डमीवर स्पर्श १ सेकंद स्थिर ठेवा!", color: "#22c55e" },
+                { startTime: 21500, subPhase: 3, marathiText: "सुरक्षित मागे या.", status: "३. सुरक्षित एन गार्डेवर रिकव्हर व्हा.", color: "#38bdf8" }
             ]
         },
         {
             drillId: 5,
-            title: "🚀 ६. रॉकेट लंज – क्षितिजसमांतर वेग",
+            title: "६. रॉकेट लंज",
             phases: [
-                { startTime: 0, subPhase: 0, marathiText: "लंजसाठी तयार राहा.", englishText: "Prepare for explosive horizontal lunge.", status: "१. लक्ष्य छातीवर रोखा - लंजसाठी स्प्रिंग तयार ठेवा!", color: "#38bdf8" },
-                { startTime: 6500, subPhase: 1, marathiText: "हात आधी, मागचा पाय स्थिर, रॉकेट लंज!", englishText: "Arm first, rear foot anchored, rocket lunge drive!", status: "२. हात आधी ➔ मागच्या पायाने क्षितिजसमांतर धक्का ➔ ९०° अचूक लंज!", color: "#4ade80" },
-                { startTime: 17500, subPhase: 2, marathiText: "शाब्बास! लंज स्थिर ठेवा.", englishText: "Excellent lunge landing! Hold your 90-degree balance.", status: "🎯 शाब्बास रीवा! अचूक लंजचा तोल १ सेकंद स्थिर ठेवा!", color: "#22c55e" },
-                { startTime: 21500, subPhase: 3, marathiText: "पुढच्या टाचेने ढकलून मागे या.", englishText: "Push off the front heel and recover upright.", status: "३. पुढच्या टाचेने जमिनीला मागे ढकला आणि ताठ रिकव्हर व्हा!", color: "#38bdf8" }
+                { startTime: 0, subPhase: 0, marathiText: "लंजसाठी तयार राहा.", status: "१. लक्ष्य छातीवर रोखा - लंजसाठी स्प्रिंग तयार ठेवा!", color: "#38bdf8" },
+                { startTime: 6500, subPhase: 1, marathiText: "हात आधी, मागचा पाय स्थिर, रॉकेट लंज!", status: "२. हात आधी ➔ मागच्या पायाने धक्का ➔ ९०° अचूक लंज!", color: "#4ade80" },
+                { startTime: 17500, subPhase: 2, marathiText: "शाब्बास! लंज स्थिर ठेवा.", status: "🎯 शाब्बास रीवा! अचूक लंजचा तोल १ सेकंद स्थिर ठेवा!", color: "#22c55e" },
+                { startTime: 21500, subPhase: 3, marathiText: "पुढच्या टाचेने ढकलून मागे या.", status: "३. पुढच्या टाचेने जमिनीला ढकला आणि रिकव्हर व्हा!", color: "#38bdf8" }
             ]
         },
         {
             drillId: 6,
-            title: "⚡ ७. पॅरी ४ आणि रिपोस्ट",
+            title: "७. पॅरी ४",
             phases: [
-                { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण पाहा, अंतर राखा.", englishText: "Read opponent's attack; prepare defensive retreat.", status: "१. प्रतिस्पर्ध्याचे आक्रमण ओळखा, अंतर राखण्यासाठी सज्ज राहा.", color: "#38bdf8" },
-                { startTime: 6000, subPhase: 1, marathiText: "मागे पाऊल, कोपर स्थिर, पॅरी चार!", englishText: "Retreat step, tuck elbow, Parry 4 inside line!", status: "२. मागे पाऊल (चवडा आधी), कोपर बरगडीजवळ स्थिर ठेवून डावीकडे पॅरी ४!", color: "#facc15" },
-                { startTime: 15000, subPhase: 2, marathiText: "हात मागे न घेता, थेट आतल्या छातीवर रिपोस्ट!", englishText: "Direct riposte to inner chest without retracting arm!", status: "३. हात मागे न घेता तिथूनच आतल्या छातीवर थेट रिपोस्ट!", color: "#22c55e" },
-                { startTime: 23000, subPhase: 3, marathiText: "शाब्बास रीवा, उत्कृष्ट पॅरी चार व रिपोस्ट!", englishText: "Splendid execution of Parry 4 and riposte!", status: "४. अचूक पॅरी चार व रिपोस्ट पूर्ण! शाब्बास रीवा!", color: "#38bdf8" }
+                { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण पाहा, अंतर राखा.", status: "१. प्रतिस्पर्ध्याचे आक्रमण ओळखा, सज्ज राहा.", color: "#38bdf8" },
+                { startTime: 6000, subPhase: 1, marathiText: "मागे पाऊल, कोपर स्थिर, पॅरी चार!", status: "२. मागे पाऊल, कोपर बरगडीजवळ ठेवून डावीकडे पॅरी ४!", color: "#facc15" },
+                { startTime: 15000, subPhase: 2, marathiText: "हात मागे न घेता थेट छातीवर रिपोस्ट!", status: "३. हात मागे न घेता थेट छातीवर रिपोस्ट!", color: "#22c55e" },
+                { startTime: 23000, subPhase: 3, marathiText: "शाब्बास रीवा, उत्कृष्ट पॅरी चार व रिपोस्ट!", status: "४. अचूक पॅरी चार व रिपोस्ट पूर्ण! शाब्बास!", color: "#38bdf8" }
             ]
         },
         {
             drillId: 7,
-            title: "🛡️ ८. पॅरी ६ आणि रिपोस्ट",
+            title: "८. पॅरी ६",
             phases: [
-                { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण ओळखा.", englishText: "Recognize incoming high-line thrust.", status: "१. प्रतिस्पर्ध्याच्या आक्रमणाची दिशा ओळखा.", color: "#38bdf8" },
-                { startTime: 6000, subPhase: 1, marathiText: "अंगठा वर, उजवीकडे पॅरी सहा!", englishText: "Thumb up, lateral Parry 6 outside line!", status: "२. मागे पाऊल, अंगठा वर (👍)! उजवीकडे मजबूत बेसने पॅरी ६!", color: "#facc15" },
-                { startTime: 15000, subPhase: 2, marathiText: "बरगड्यांवर थेट रिपोस्ट, टच!", englishText: "Direct riposte to opponent's open flank! Touch!", status: "३. रिपोस्ट: प्रतिस्पर्ध्याच्या उघड्या बरगड्यांवर (Flank) अचूक स्पर्श!", color: "#22c55e" },
-                { startTime: 23000, subPhase: 3, marathiText: "शाब्बास रीवा, सुंदर पॅरी सहा!", englishText: "Masterful Parry 6 and riposte finish!", status: "४. पॅरी ६ व रिपोस्ट पूर्ण! शाब्बास रीवा!", color: "#38bdf8" }
+                { startTime: 0, subPhase: 0, marathiText: "प्रतिस्पर्ध्याचे आक्रमण ओळखा.", status: "१. प्रतिस्पर्ध्याच्या आक्रमणाची दिशा ओळखा.", color: "#38bdf8" },
+                { startTime: 6000, subPhase: 1, marathiText: "अंगठा वर, उजवीकडे पॅरी सहा!", status: "२. मागे पाऊल, अंगठा वर! उजवीकडे पॅरी ६!", color: "#facc15" },
+                { startTime: 15000, subPhase: 2, marathiText: "बरगड्यांवर थेट रिपोस्ट, टच!", status: "३. रिपोस्ट: प्रतिस्पर्ध्याच्या बरगड्यांवर अचूक स्पर्श!", color: "#22c55e" },
+                { startTime: 23000, subPhase: 3, marathiText: "शाब्बास रीवा, सुंदर पॅरी सहा!", status: "४. पॅरी ६ व रिपोस्ट पूर्ण! शाब्बास!", color: "#38bdf8" }
             ]
         }
     ];
 
     let effectiveElapsed = 0;
     let lastFrameTime = performance.now();
-    let isPaused = true;
-    let playbackSpeed = 1.0;
+    let isPaused = false;
+    let currentPlaybackSpeed = 1.0;
     let isSlowMoHold = false;
     let currentDrill = 0;
     let currentSubPhase = -1;
 
-    function updateDrillStateMachine(localTime) {
-        const config = drillTimelineConfigs[currentDrill];
-        if (!config) return;
-
-        let targetPhase = config.phases[0];
-        for (let i = config.phases.length - 1; i >= 0; i--) {
-            if (localTime >= config.phases[i].startTime) {
-                targetPhase = config.phases[i];
-                break;
-            }
-        }
-
-        if (currentSubPhase !== targetPhase.subPhase) {
-            currentSubPhase = targetPhase.subPhase;
-
-            const badge = document.getElementById('subDrillTitle');
-            if (badge) badge.innerText = `Drill #1 (${currentDrill + 1}/8)`;
-
-            if (statusBox) {
-                statusBox.innerText = getPersonalized(targetPhase.status);
-                statusBox.style.color = targetPhase.color;
-            }
-
-            speakCoachingCue(targetPhase.marathiText, targetPhase.englishText);
-        }
-
-        const remainingSec = Math.max(0, Math.ceil((DRILL_DURATION - localTime) / 1000));
-        const timerNum = document.getElementById('timer-number');
-        if (timerNum) timerNum.innerText = `${remainingSec}s`;
-
-        const timerProgress = document.getElementById('timerProgress');
-        if (timerProgress) {
-            const pct = Math.min(100, (localTime / DRILL_DURATION) * 100);
-            timerProgress.setAttribute('stroke-dashoffset', 100 - pct);
-        }
-    }
-
-    // Pointer Press & Hold Slow-Motion
+    // SCREEN PRESS-AND-HOLD SLOW-MOTION
     let pointerDownTime = 0;
     let holdTimeout = null;
 
@@ -370,7 +336,7 @@
     });
 
     // -------------------------------------------------------------
-    // EXACT ANATOMICAL IK & DRAWING ENGINE
+    // ANATOMICAL INVERSE KINEMATICS & APPAREL
     // -------------------------------------------------------------
     function solveLegIK(hx, hy, ax, ay, l1, l2, bendForward = true) {
         const dx = ax - hx;
@@ -929,7 +895,7 @@
     }
 
     // -------------------------------------------------------------
-    // SUB-DRILL RENDERS
+    // SUB-DRILL ANIMATION ROUTINES
     // -------------------------------------------------------------
     function renderDrill1_LStance(t) {
         drawFencingStrip(GROUND_Y);
@@ -1480,7 +1446,73 @@
     }
 
     // -------------------------------------------------------------
-    // MAIN RENDER LOOP (PRESERVES RADIAL GRADIENT)
+    // STOPWATCH & HUD
+    // -------------------------------------------------------------
+    function updateDrillStateMachine(currentTimeMs) {
+        const config = drillTimelineConfigs[currentDrill];
+        if (!config) return;
+
+        let targetPhase = config.phases[0];
+        for (let i = config.phases.length - 1; i >= 0; i--) {
+            if (currentTimeMs >= config.phases[i].startTime) {
+                targetPhase = config.phases[i];
+                break;
+            }
+        }
+
+        if (currentSubPhase !== targetPhase.subPhase) {
+            currentSubPhase = targetPhase.subPhase;
+
+            if (drillHeaderBadge) {
+                drillHeaderBadge.innerText = `Drill #1 (${currentDrill + 1}/8)`;
+            }
+
+            if (statusBox) {
+                statusBox.innerText = getPersonalized(targetPhase.status);
+                statusBox.style.color = targetPhase.color;
+            }
+
+            const btns = document.querySelectorAll('.subdrill-btn');
+            btns.forEach((b, i) => {
+                if (i === currentDrill) b.classList.add('active'); else b.classList.remove('active');
+            });
+
+            speakCoachingCue(targetPhase.marathiText);
+        }
+
+        const remainingSec = Math.max(0, Math.ceil((DRILL_DURATION - currentTimeMs) / 1000));
+        if (timerNumber) {
+            timerNumber.innerText = `${remainingSec}s`;
+        }
+        if (timerProgress) {
+            const pct = Math.min(100, (currentTimeMs / DRILL_DURATION) * 100);
+            timerProgress.setAttribute('stroke-dashoffset', 100 - pct);
+        }
+    }
+
+    function drawCanvasHUD(t, totalDuration) {
+        const progress = Math.min(1, t / totalDuration);
+        const remainingSec = Math.ceil((totalDuration - t) / 1000);
+
+        ctx.fillStyle = '#1e293b'; ctx.fillRect(40, 12, 740, 7);
+        ctx.fillStyle = progress > 0.85 ? '#22c55e' : '#38bdf8';
+        ctx.fillRect(40, 12, 740 * progress, 7);
+        ctx.strokeStyle = '#334155'; ctx.strokeRect(40, 12, 740, 7);
+
+        ctx.fillStyle = '#facc15'; ctx.font = '600 12px sans-serif';
+        ctx.fillText(`⏱️ वेळ: ${remainingSec} से | सराव ${currentDrill + 1}/८`, 42, 34);
+
+        if (isSlowMoHold || currentPlaybackSpeed === 0.25) {
+            ctx.fillStyle = '#facc15';
+            ctx.fillText("🐢 स्लो-मोशन (०.२५x)", 360, 34);
+        } else if (currentPlaybackSpeed === 1.75) {
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText("⚡ जलद (१.७५x)", 360, 34);
+        }
+    }
+
+    // -------------------------------------------------------------
+    // ANIMATION LOOP
     // -------------------------------------------------------------
     function render() {
         const now = performance.now();
@@ -1488,13 +1520,15 @@
         lastFrameTime = now;
 
         if (now >= hitStopUntil && !isPaused) {
-            const activeRate = isSlowMoHold ? 0.25 : playbackSpeed;
+            const activeRate = isSlowMoHold ? 0.25 : currentPlaybackSpeed;
             effectiveElapsed += dt * activeRate;
 
-            // Loop after 30s
             if (effectiveElapsed >= DRILL_DURATION) {
                 effectiveElapsed = 0;
+                currentDrill = (currentDrill + 1) % 8;
+                currentSubPhase = -1;
             }
+
             updateDrillStateMachine(effectiveElapsed);
         }
 
@@ -1514,23 +1548,15 @@
         updateAndDrawRipples();
         restoreCameraTransform();
 
+        drawCanvasHUD(effectiveElapsed, DRILL_DURATION);
         requestAnimationFrame(render);
     }
 
     render();
 
     // -------------------------------------------------------------
-    // MASTER SHELL INTERFACE
+    // EXPORTED MASTER SHELL INTERFACE
     // -------------------------------------------------------------
-    function switchSub(idx) {
-        stopAllSpeech();
-        currentDrill = (idx + 8) % 8;
-        effectiveElapsed = 0;
-        currentSubPhase = -1;
-        lastFrameTime = performance.now();
-        updateDrillStateMachine(0);
-    }
-
     window.RivaCartridge = {
         init: () => {
             initAudio();
@@ -1538,43 +1564,65 @@
             effectiveElapsed = 0;
             currentDrill = 0;
             currentSubPhase = -1;
+            currentPlaybackSpeed = 1.0;
             lastFrameTime = performance.now();
             updateDrillStateMachine(0);
-        },
-        togglePlay: () => {
-            initAudio();
-            isPaused = !isPaused;
-            if (isPaused) stopAllSpeech();
-            else lastFrameTime = performance.now();
-            return !isPaused;
         },
         restart: () => {
             stopAllSpeech();
             initAudio();
-            isPaused = false;
             effectiveElapsed = 0;
             currentSubPhase = -1;
+            currentPlaybackSpeed = 1.0;
             lastFrameTime = performance.now();
+            isPaused = false;
             updateDrillStateMachine(0);
+        },
+        togglePause: () => {
+            initAudio();
+            isPaused = !isPaused;
+            if (isPaused) stopAllSpeech();
+            else lastFrameTime = performance.now();
+            return isPaused;
         },
         stop: () => {
             isPaused = true;
             stopAllSpeech();
         },
-        setMuted: (muted) => {
-            isMutedLocally = muted;
-            if (isMutedLocally) stopAllSpeech();
+        switchSubDrill: (idx) => {
+            stopAllSpeech();
+            currentDrill = Math.max(0, Math.min(7, idx));
+            effectiveElapsed = 0;
+            currentSubPhase = -1;
+            currentPlaybackSpeed = 1.0;
+            lastFrameTime = performance.now();
+            updateDrillStateMachine(0);
         },
-        toggleSpeed: (rate) => {
-            if (playbackSpeed === rate) {
-                playbackSpeed = 1.0;
-                return false;
-            } else {
-                playbackSpeed = rate;
-                return true;
-            }
+        nextSubDrill: () => {
+            stopAllSpeech();
+            currentDrill = (currentDrill + 1) % 8;
+            effectiveElapsed = 0;
+            currentSubPhase = -1;
+            currentPlaybackSpeed = 1.0;
+            lastFrameTime = performance.now();
+            updateDrillStateMachine(0);
         },
-        nextSub: () => switchSub(currentDrill + 1),
-        prevSub: () => switchSub(currentDrill - 1)
+        prevSubDrill: () => {
+            stopAllSpeech();
+            currentDrill = (currentDrill - 1 + 8) % 8;
+            effectiveElapsed = 0;
+            currentSubPhase = -1;
+            currentPlaybackSpeed = 1.0;
+            lastFrameTime = performance.now();
+            updateDrillStateMachine(0);
+        },
+        setSpeed: (multiplier) => {
+            currentPlaybackSpeed = multiplier;
+        },
+        toggleAudio: () => {
+            isMuted = !isMuted;
+            if (isMuted) stopAllSpeech();
+            return isMuted;
+        }
     };
 })();
