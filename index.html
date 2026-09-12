@@ -25,7 +25,7 @@
         }
 
         /* ------------------------------------------------------------- */
-        /* LAYER 1: MINIMAL ATHLETIC DUAL-PORTAL                         */
+        /* LAYER 1: MINIMAL ATHLETIC TRIPLE-PORTAL                       */
         /* ------------------------------------------------------------- */
         .portal-stage {
             display: flex;
@@ -34,8 +34,8 @@
             max-width: 480px;
             height: calc(100vh - 72px);
             height: calc(100dvh - 72px);
-            padding: 16px 14px 10px;
-            gap: 16px;
+            padding: 14px 14px 8px;
+            gap: 12px;
         }
         .portal-top-bar {
             display: flex;
@@ -67,23 +67,25 @@
             background: #22c55e; box-shadow: 0 0 6px #22c55e;
         }
 
-        /* MINIMAL PORTAL CARDS */
+        /* PORTAL CARDS CONTAINER */
         .portal-cards-container {
             display: flex;
             flex-direction: column;
-            gap: 14px;
+            gap: 10px;
             flex: 1;
+            overflow-y: auto;
         }
         .portal-card {
             flex: 1;
+            min-height: 84px;
             display: flex;
             align-items: center;
-            gap: 18px;
-            padding: 20px 22px;
-            border-radius: 20px;
+            gap: 16px;
+            padding: 14px 18px;
+            border-radius: 18px;
             cursor: pointer;
             position: relative;
-            box-shadow: 0 10px 26px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 22px rgba(0,0,0,0.45);
             transition: transform 0.12s ease, border-color 0.12s ease;
             touch-action: manipulation;
         }
@@ -101,10 +103,16 @@
         }
         .card-sparrer:active { border-color: #f59e0b; }
 
+        .card-clinic {
+            background: linear-gradient(135deg, #062419 0%, #0d3b2b 100%);
+            border: 1.5px solid #059669;
+        }
+        .card-clinic:active { border-color: #34d399; }
+
         .portal-icon {
-            font-size: 40px;
-            width: 64px; height: 64px;
-            border-radius: 16px;
+            font-size: 34px;
+            width: 56px; height: 56px;
+            border-radius: 14px;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
@@ -116,15 +124,20 @@
             background: rgba(217, 119, 6, 0.2);
             border: 1px solid rgba(245, 158, 11, 0.4);
         }
+        .card-clinic .portal-icon {
+            background: rgba(5, 150, 105, 0.2);
+            border: 1px solid rgba(52, 211, 153, 0.4);
+        }
 
-        .portal-info { display: flex; flex-direction: column; gap: 4px; }
-        .portal-title { font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: 0.3px; }
+        .portal-info { display: flex; flex-direction: column; gap: 3px; }
+        .portal-title { font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: 0.3px; }
         .portal-tag {
-            font-size: 13px; font-weight: 700;
-            padding: 3px 10px; border-radius: 8px; width: fit-content;
+            font-size: 12px; font-weight: 700;
+            padding: 2px 8px; border-radius: 6px; width: fit-content;
         }
         .tag-drills { background: rgba(56, 189, 248, 0.16); color: #38bdf8; }
         .tag-sparrer { background: rgba(245, 158, 11, 0.16); color: #facc15; }
+        .tag-clinic  { background: rgba(52, 211, 153, 0.16); color: #34d399; }
 
         /* ------------------------------------------------------------- */
         /* PORTAL 1 SUB-VIEW: DRILL CATALOG                              */
@@ -217,7 +230,7 @@
             gap: 4px;
         }
         .header-btn:active { background: #0284c7; }
-        .header-home-btn { display: none; } /* Appears inside header only in landscape */
+        .header-home-btn { display: none; }
 
         .header-title-pill {
             background: #0f172a;
@@ -368,28 +381,16 @@
         }
 
         /* ------------------------------------------------------------- */
-        /* VIEW 4: SPARRER ENGINE MOUNTING STAGE                         */
+        /* VIEW 4 & 5: DYNAMIC MODULE STAGES                             */
         /* ------------------------------------------------------------- */
-        .sparrer-placeholder-stage {
+        .module-stage {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             width: 100%;
-            max-width: 500px;
-            padding: 30px 16px;
-            text-align: center;
-            gap: 14px;
+            max-width: 640px;
+            padding: 12px 14px 64px;
         }
-        .sparrer-icon-box {
-            width: 72px; height: 72px; border-radius: 20px;
-            background: rgba(245, 158, 11, 0.12);
-            border: 2px solid #f59e0b;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 32px;
-        }
-        .sparrer-title { font-size: 22px; font-weight: 800; color: #facc15; }
-        .sparrer-desc { font-size: 13.5px; color: #94a3b8; line-height: 1.5; max-width: 360px; }
 
         /* ------------------------------------------------------------- */
         /* UNIVERSAL BOTTOM ANCHOR (PORTRAIT ONLY)                       */
@@ -421,12 +422,10 @@
         .universal-nav-btn svg { width: 18px; height: 18px; }
 
         /* ------------------------------------------------------------- */
-        /* FULL-STAGE LANDSCAPE IMMERSION ENGINE (2X FENCER SCALE)       */
+        /* FULL-STAGE LANDSCAPE IMMERSION ENGINE                         */
         /* ------------------------------------------------------------- */
         @media (orientation: landscape) and (max-height: 520px) {
             body { padding-bottom: 0 !important; }
-
-            /* 1. Universal bottom dock is hidden in landscape arena */
             .universal-dock { display: none !important; }
 
             .arena-stage {
@@ -434,25 +433,16 @@
                 height: 100dvh;
                 justify-content: space-between;
             }
-
-            /* 2. Top Header houses Home escape button */
-            .top-header {
-                height: 30px;
-                margin-bottom: 2px;
-            }
+            .top-header { height: 30px; margin-bottom: 2px; }
             .header-home-btn {
-                display: flex;
-                background: #0284c7;
-                border-color: #38bdf8;
-                padding: 3px 9px;
-                font-size: 11px;
+                display: flex; background: #0284c7; border-color: #38bdf8;
+                padding: 3px 9px; font-size: 11px;
             }
             .header-btn { padding: 3px 8px; font-size: 11.5px; }
             .header-title-pill { padding: 3px 10px; font-size: 11.5px; }
             .timer-ring-container, .timer-ring-svg { width: 28px; height: 28px; }
             .timer-label { font-size: 9.5px; }
 
-            /* 3. Canvas expands to fill 85% of viewport height */
             .canvas-host {
                 width: auto;
                 height: calc(100dvh - 78px) !important;
@@ -460,118 +450,64 @@
                 aspect-ratio: 820 / 420;
                 margin: 0 auto;
             }
-
-            /* 4. Coach caption floats over bottom piste (takes 0 layout height) */
             .coach-feedback-box {
-                position: absolute;
-                bottom: 46px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: auto;
-                max-width: 82%;
-                background: rgba(15, 23, 42, 0.82);
-                backdrop-filter: blur(6px);
-                -webkit-backdrop-filter: blur(6px);
-                border: 1px solid rgba(56, 189, 248, 0.35);
-                border-radius: 20px;
-                padding: 2px 14px;
-                margin: 0;
-                pointer-events: none;
-                z-index: 20;
+                position: absolute; bottom: 46px; left: 50%;
+                transform: translateX(-50%); width: auto; max-width: 82%;
+                background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(6px);
+                border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 20px;
+                padding: 2px 14px; margin: 0; pointer-events: none; z-index: 20;
             }
-            #status-box {
-                font-size: 12px;
-                min-height: 18px;
-            }
+            #status-box { font-size: 12px; min-height: 18px; }
             .hint-bar { display: none; }
 
-            /* 5. Ultra-slim bottom controls dock */
-            .controls-dock {
-                height: 38px;
-                padding: 2px 12px;
-                margin-top: 2px;
-            }
-            .nav-step-btn {
-                padding: 5px 12px;
-                min-width: 76px;
-                font-size: 11.5px;
-            }
+            .controls-dock { height: 38px; padding: 2px 12px; margin-top: 2px; }
+            .nav-step-btn { padding: 5px 12px; min-width: 76px; font-size: 11.5px; }
             .action-icon-btn { width: 32px; height: 32px; }
             .play-hero-btn { width: 34px; height: 34px; }
         }
 
-        /* LAYER 0 MODAL */
-        .settings-overlay {
+        /* MODALS & OVERLAYS */
+        .settings-overlay, .drawer-overlay {
             position: fixed; inset: 0; background: rgba(4, 7, 13, 0.85);
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            z-index: 1000; display: flex; align-items: center; justify-content: center;
-            padding: 16px;
+            backdrop-filter: blur(8px); z-index: 1000;
+            display: flex; align-items: center; justify-content: center; padding: 16px;
         }
-        .settings-card {
+        .settings-card, .drawer-card {
             width: 100%; max-width: 380px; background: #0f172a;
             border: 1.5px solid #38bdf8; border-radius: 18px; padding: 18px;
             box-shadow: 0 16px 36px rgba(0,0,0,0.85);
         }
-        .settings-title {
+        .settings-title, .drawer-title {
             font-size: 16px; font-weight: 800; color: #f8fafc;
             margin-bottom: 12px; text-align: center;
         }
-        .settings-card label {
-            font-size: 12px; font-weight: 700; color: #94a3b8;
-            display: block; margin-top: 10px;
-        }
+        .settings-card label { font-size: 12px; font-weight: 700; color: #94a3b8; display: block; margin-top: 10px; }
         .settings-card input {
             width: 100%; height: 38px; background: #1e293b; border: 1px solid #334155;
-            border-radius: 8px; padding: 0 10px; color: #fff; font-size: 13.5px;
-            margin-top: 4px; outline: none;
+            border-radius: 8px; padding: 0 10px; color: #fff; font-size: 13.5px; margin-top: 4px; outline: none;
         }
         .stance-group { display: flex; gap: 8px; margin-top: 6px; }
         .stance-btn {
-            flex: 1; padding: 8px 4px; background: #1e293b;
-            border: 1.5px solid #334155; border-radius: 10px;
-            color: #cbd5e1; cursor: pointer; text-align: center;
+            flex: 1; padding: 8px 4px; background: #1e293b; border: 1.5px solid #334155;
+            border-radius: 10px; color: #cbd5e1; cursor: pointer; text-align: center;
             font-family: inherit; font-weight: 700; font-size: 11px;
-            transition: all 0.12s ease;
         }
-        .stance-btn .footprint { font-size: 15px; display: block; margin-bottom: 2px; }
-        .stance-btn.active {
-            background: rgba(2, 132, 199, 0.25);
-            border-color: #38bdf8; color: #38bdf8;
-        }
+        .stance-btn.active { background: rgba(2, 132, 199, 0.25); border-color: #38bdf8; color: #38bdf8; }
         .settings-save-btn {
             width: 100%; height: 42px; margin-top: 16px; background: #0284c7;
-            color: #fff; border: none; border-radius: 8px; font-weight: 800;
-            font-size: 14px; cursor: pointer;
-        }
-
-        /* DRAWER OVERLAY */
-        .drawer-overlay {
-            position: fixed; inset: 0; background: rgba(4, 7, 13, 0.78);
-            backdrop-filter: blur(6px); z-index: 900;
-            display: flex; align-items: center; justify-content: center; padding: 16px;
-        }
-        .drawer-card {
-            width: 100%; max-width: 380px; background: #0f172a;
-            border: 1.5px solid #38bdf8; border-radius: 16px; padding: 16px;
-            box-shadow: 0 12px 32px rgba(0,0,0,0.8);
-        }
-        .drawer-title {
-            font-size: 14px; font-weight: 800; color: #38bdf8;
-            margin-bottom: 12px; text-align: center;
+            color: #fff; border: none; border-radius: 8px; font-weight: 800; font-size: 14px; cursor: pointer;
         }
         .drawer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
         .drawer-item-btn {
             background: #1e293b; color: #f8fafc; border: 1px solid #334155;
-            border-radius: 8px; padding: 9px 8px; font-size: 12px; font-weight: 700;
-            cursor: pointer; text-align: left;
+            border-radius: 8px; padding: 9px 8px; font-size: 12px; font-weight: 700; cursor: pointer;
         }
-        .drawer-item-btn:active { background: #0284c7; border-color: #38bdf8; }
     </style>
 </head>
 <body>
 
     <!-- ------------------------------------------------------------- -->
-    <!-- VIEW 1: DUAL-PORTAL DASHBOARD                                 -->
+    <!-- VIEW 1: TRIPLE-PORTAL DASHBOARD                               -->
     <!-- ------------------------------------------------------------- -->
     <main id="portalView" class="portal-stage">
         <header class="portal-top-bar">
@@ -601,6 +537,15 @@
                 <div class="portal-info">
                     <h2 class="portal-title">आव्हान</h2>
                     <span class="portal-tag tag-sparrer">रिअॅक्शन स्पॅरर • Combat Reflex</span>
+                </div>
+            </article>
+
+            <!-- PORTAL 3: TAPASANI (KINETIC VIDEO CLINIC) -->
+            <article class="portal-card card-clinic" onclick="openKineticClinic()">
+                <div class="portal-icon">📹</div>
+                <div class="portal-info">
+                    <h2 class="portal-title">तपासणी</h2>
+                    <span class="portal-tag tag-clinic">व्हिडिओ क्लिनिक • AI स्टॅन्स व लंज</span>
                 </div>
             </article>
         </div>
@@ -698,17 +643,12 @@
     <!-- ------------------------------------------------------------- -->
     <!-- VIEW 4: SPARRER ENGINE MOUNTING STAGE                         -->
     <!-- ------------------------------------------------------------- -->
-    <section id="sparrerPlaceholderView" class="sparrer-placeholder-stage" style="display: none;">
-        <div class="sparrer-icon-box">⚡</div>
-        <h2 class="sparrer-title">आव्हान (Reaction Sparrer)</h2>
-        <p class="sparrer-desc">
-            १०-फूट अ‍ॅम्बियंट व्हिजन संकेत (हिरवा: पुढे, निळा: मागे, अंबर: 'थांबा!' ब्रेक).
-            मायक्रो-बर्स्ट बाऊट इंजिन लोड होत आहे...
-        </p>
-        <button class="back-portal-btn" onclick="goHome()" style="padding:10px 20px; font-size:13.5px; margin-top:8px;">
-            ← मुख्य पोर्टलवर परत जा
-        </button>
-    </section>
+    <section id="sparrerPlaceholderView" class="module-stage" style="display: none;"></section>
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- VIEW 5: KINETIC VIDEO CLINIC STAGE                            -->
+    <!-- ------------------------------------------------------------- -->
+    <section id="clinicStageContainer" class="module-stage" style="display: none;"></section>
 
     <!-- ------------------------------------------------------------- -->
     <!-- UNIVERSAL BOTTOM ANCHOR (PORTRAIT ONLY)                       -->
@@ -725,7 +665,7 @@
         <button class="universal-nav-btn" id="univSettingsBtn" onclick="openSettingsModal()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
             <span>⚙ सेटिंग्ज</span>
         </button>
@@ -821,10 +761,12 @@ function goHome() {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     if (currentCartridge && currentCartridge.stop) currentCartridge.stop();
     if (window.RivaSparrer && window.RivaSparrer.stop) window.RivaSparrer.stop();
+    if (window.RivaClinic && window.RivaClinic.stop) window.RivaClinic.stop();
 
     document.getElementById('arenaView').style.display = 'none';
     document.getElementById('catalogView').style.display = 'none';
     document.getElementById('sparrerPlaceholderView').style.display = 'none';
+    document.getElementById('clinicStageContainer').style.display = 'none';
     document.getElementById('portalView').style.display = 'flex';
 
     document.getElementById('univHomeBtn').classList.add('active');
@@ -850,6 +792,21 @@ function openReactionSparrer() {
         document.body.appendChild(s);
     } else {
         window.RivaSparrer.init();
+    }
+}
+
+function openKineticClinic() {
+    primeAudioOnUserGesture();
+    document.getElementById('portalView').style.display = 'none';
+    document.getElementById('clinicStageContainer').style.display = 'flex';
+
+    if (!window.RivaClinic) {
+        const s = document.createElement('script');
+        s.src = 'clinic.js';
+        s.onload = () => window.RivaClinic.init();
+        document.body.appendChild(s);
+    } else {
+        window.RivaClinic.init();
     }
 }
 
