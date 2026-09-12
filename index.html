@@ -239,7 +239,7 @@
             gap: 6px;
             min-width: 90px;
             justify-content: center;
-            touch-action: none; /* Prevents scroll cancellation on touch hold */
+            touch-action: none;
             -webkit-touch-callout: none;
             transition: background 0.12s ease, border-color 0.12s ease;
         }
@@ -287,7 +287,7 @@
             box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
         }
 
-        /* QUICK JUMP DRAWER */
+        /* DYNAMIC QUICK JUMP DRAWER */
         .drawer-overlay {
             position: fixed; inset: 0; background: rgba(4, 7, 13, 0.78);
             backdrop-filter: blur(6px); z-index: 900;
@@ -394,7 +394,7 @@
 </head>
 <body>
 
-    <!-- VIEW 1: ACTIVE DRILL CATALOG (PURE NUMERIC) -->
+    <!-- VIEW 1: ACTIVE DRILL CATALOG -->
     <div id="catalogView" class="catalog-stage">
         <div class="catalog-header">
             <span class="catalog-title">Riva Fencer</span>
@@ -412,7 +412,7 @@
             </button>
             
             <div class="header-title-pill" id="drillHeaderBadge" onclick="toggleSubDrillDrawer(true)">
-                <span id="drillHeaderBadgeText">Drill #1 (1/8)</span>
+                <span id="drillHeaderBadgeText">Drill #1</span>
                 <span style="font-size:10px; opacity:0.8;">▾</span>
             </div>
             
@@ -475,20 +475,11 @@
         </nav>
     </div>
 
-    <!-- QUICK-JUMP SUB-DRILL DRAWER -->
+    <!-- DYNAMIC QUICK-JUMP SUB-DRILL DRAWER -->
     <div id="subDrillDrawer" class="drawer-overlay" style="display: none;" onclick="toggleSubDrillDrawer(false)">
         <div class="drawer-card" onclick="event.stopPropagation()">
             <div class="drawer-title">सराव भाग निवडा (Select Sub-Drill)</div>
-            <div class="drawer-grid">
-                <button class="drawer-item-btn" onclick="selectSubDrillAndClose(0)">१. 'L' पोझिशन</button>
-                <button class="drawer-item-btn" onclick="selectSubDrillAndClose(1)">२. एन गार्डे</button>
-                <button class="drawer-item-btn" onclick="selectSubDrillAndClose(2)">३. पाऊल क्रम</button>
-                <button class="drawer-item-btn" onclick="selectSubDrillAndClose(3)">४. लेझर टिप</button>
-                <button class="drawer-item-btn" onclick="selectSubDrillAndClose(4)">५. अटॅक</button>
-                <button class="drawer-item-btn" onclick="selectSubDrillAndClose(5)">६. रॉकेट लंज</button>
-                <button class="drawer-item-btn" onclick="selectSubDrillAndClose(6)">७. पॅरी ४</button>
-                <button class="drawer-item-btn" onclick="selectSubDrillAndClose(7)">८. पॅरी ६</button>
-            </div>
+            <div class="drawer-grid" id="drawerGrid"></div>
         </div>
     </div>
 
@@ -517,7 +508,8 @@
     </div>
 
 <script>
-const AVAILABLE_DRILLS = [1];
+// ACTIVATING DRILLS 1 AND 2
+const AVAILABLE_DRILLS = [1, 2];
 let currentCartridge = null;
 
 function buildCatalog() {
@@ -555,10 +547,24 @@ function loadCartridge(id) {
         if (window.RivaCartridge) {
             currentCartridge = window.RivaCartridge;
             currentCartridge.init();
+            buildSubDrillDrawer();
             setPlayState(true);
         }
     };
     document.body.appendChild(s);
+}
+
+function buildSubDrillDrawer() {
+    const grid = document.getElementById('drawerGrid');
+    if (!grid || !currentCartridge || !currentCartridge.subDrills) return;
+    grid.innerHTML = '';
+    currentCartridge.subDrills.forEach((title, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'drawer-item-btn';
+        btn.innerText = title;
+        btn.onclick = () => selectSubDrillAndClose(idx);
+        grid.appendChild(btn);
+    });
 }
 
 function setPlayState(isPlaying) {
@@ -595,9 +601,7 @@ function triggerAudioToggle() {
     document.getElementById('audioMuteIcon').style.display = isMuted ? 'block' : 'none';
 }
 
-// -------------------------------------------------------------
-// BULLETPROOF TAP-VS-HOLD GESTURE ENGINE (FIXES DOUBLE-STEP BUG)
-// -------------------------------------------------------------
+// TAP-VS-HOLD GESTURE PIPELINE
 function setupReliableStepHoldButton(config) {
     const { btnId, labelId, normalText, activeHoldText, activeClass, onSingleTap, onHoldStart, onHoldEnd } = config;
     const el = document.getElementById(btnId);
@@ -619,28 +623,25 @@ function setupReliableStepHoldButton(config) {
             el.classList.add(activeClass);
             if (labelEl) labelEl.innerText = activeHoldText;
             onHoldStart();
-        }, 260); // 260ms threshold distinguishes a tap from intentional hold
+        }, 260);
     });
 
     el.addEventListener('pointerup', (e) => {
         e.preventDefault();
-        if (!isDown) return; // Ignores secondary ghost releases
+        if (!isDown) return;
         isDown = false;
         clearTimeout(holdTimer);
 
         if (isHoldActive) {
-            // Held down: end speed scrub
             el.classList.remove(activeClass);
             if (labelEl) labelEl.innerText = normalText;
             onHoldEnd();
         } else {
-            // Quick tap: advance exactly once!
             onSingleTap();
         }
         isHoldActive = false;
     });
 
-    // If gesture is cancelled or leaves, ONLY shut down active hold without firing tap
     const cancelHold = () => {
         if (!isDown) return;
         isDown = false;
@@ -657,7 +658,6 @@ function setupReliableStepHoldButton(config) {
     el.addEventListener('pointerleave', cancelHold);
 }
 
-// BACK BUTTON: Tap = Previous Drill | Hold = 0.25x Slow Motion
 setupReliableStepHoldButton({
     btnId: 'btnPrev',
     labelId: 'btnPrevLabel',
@@ -669,7 +669,6 @@ setupReliableStepHoldButton({
     onHoldEnd:   () => { if (currentCartridge) currentCartridge.setSpeed(1.0); }
 });
 
-// NEXT BUTTON: Tap = Next Drill | Hold = 2.5x Fast Forward
 setupReliableStepHoldButton({
     btnId: 'btnNext',
     labelId: 'btnNextLabel',
