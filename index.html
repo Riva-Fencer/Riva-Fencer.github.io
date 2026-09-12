@@ -14,42 +14,136 @@
         body {
             background: #080c14;
             color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Mukta', 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
+            padding-bottom: 58px; /* Space for universal persistent bottom anchor */
         }
 
-        /* NUMERIC CATALOG */
+        /* ------------------------------------------------------------- */
+        /* LAYER 1: DUAL-PORTAL DASHBOARD                                */
+        /* ------------------------------------------------------------- */
+        .portal-stage {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 520px;
+            padding: 16px 14px 20px;
+            gap: 14px;
+        }
+        .portal-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 14px;
+        }
+        .app-branding {
+            display: flex;
+            flex-direction: column;
+        }
+        .app-name { font-size: 19px; font-weight: 800; color: #38bdf8; letter-spacing: 0.3px; }
+        .app-subtext { font-size: 11px; color: #94a3b8; font-weight: 600; }
+        .wake-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #4ade80;
+        }
+        .wake-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #22c55e; box-shadow: 0 0 6px #22c55e;
+        }
+
+        /* PORTAL CARDS */
+        .portal-card {
+            background: linear-gradient(145deg, #0f172a 0%, #131d33 100%);
+            border: 1.5px solid #1e293b;
+            border-radius: 18px;
+            padding: 18px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            transition: transform 0.12s ease, border-color 0.12s ease;
+            touch-action: manipulation;
+        }
+        .portal-card:active {
+            transform: scale(0.98);
+            border-color: #38bdf8;
+        }
+        .portal-card.card-drills {
+            border-left: 5px solid #38bdf8;
+        }
+        .portal-card.card-sparrer {
+            border-left: 5px solid #f59e0b;
+        }
+        .portal-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .badge-drills { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+        .badge-sparrer { background: rgba(245, 158, 11, 0.15); color: #facc15; }
+        .portal-heading {
+            font-size: 18px;
+            font-weight: 800;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+        .portal-desc {
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+        .portal-meta {
+            margin-top: 10px;
+            font-size: 11px;
+            color: #cbd5e1;
+            display: flex;
+            gap: 12px;
+            font-weight: 700;
+        }
+
+        /* ------------------------------------------------------------- */
+        /* DRILL CATALOG VIEW (INSIDE PORTAL 1)                          */
+        /* ------------------------------------------------------------- */
         .catalog-stage {
             display: flex;
             flex-direction: column;
             width: 100%;
-            max-width: 540px;
-            padding: 16px 12px 32px;
+            max-width: 520px;
+            padding: 14px;
         }
-        .catalog-header {
+        .catalog-nav-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
-            background: #0f172a;
-            border: 1px solid #1e293b;
-            border-radius: 14px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
-        .catalog-title { font-size: 18px; font-weight: 800; color: #38bdf8; }
-        .user-chip {
+        .back-portal-btn {
             background: #1e293b;
             border: 1px solid #334155;
-            color: #38bdf8;
-            font-size: 13px;
+            color: #f8fafc;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12.5px;
             font-weight: 700;
-            padding: 6px 14px;
-            border-radius: 9999px;
             cursor: pointer;
         }
         .numeric-grid {
@@ -65,7 +159,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 800;
             color: #f8fafc;
             cursor: pointer;
@@ -74,19 +168,20 @@
         }
         .num-card:active { transform: scale(0.92); background: #0284c7; }
 
-        /* MASTER ARENA STAGE */
+        /* ------------------------------------------------------------- */
+        /* LAYER 2: MASTER ARENA (STUDY MODE)                            */
+        /* ------------------------------------------------------------- */
         .arena-stage {
             width: 100%;
-            max-width: 820px;
+            max-width: 860px;
             height: 100vh;
             height: 100dvh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 6px 10px 10px;
+            padding: 6px 10px 62px; /* Bottom clearance for persistent anchor */
             overflow: hidden;
         }
-
         .top-header {
             display: flex;
             align-items: center;
@@ -114,7 +209,7 @@
             border: 1px solid #1e293b;
             padding: 6px 14px;
             border-radius: 20px;
-            font-size: 13.5px;
+            font-size: 13px;
             font-weight: 800;
             color: #38bdf8;
             letter-spacing: 0.3px;
@@ -125,7 +220,6 @@
         }
         .header-title-pill:active { background: #1e293b; }
 
-        /* STOPWATCH RING */
         .timer-ring-container {
             position: relative;
             width: 38px;
@@ -140,27 +234,16 @@
             height: 38px;
             transform: rotate(-90deg);
         }
-        .timer-track {
-            fill: none;
-            stroke: #1e293b;
-            stroke-width: 3.5;
-        }
+        .timer-track { fill: none; stroke: #1e293b; stroke-width: 3.5; }
         .timer-bar {
-            fill: none;
-            stroke: #38bdf8;
-            stroke-width: 3.5;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.15s linear;
+            fill: none; stroke: #38bdf8; stroke-width: 3.5;
+            stroke-linecap: round; transition: stroke-dashoffset 0.15s linear;
         }
         .timer-label {
-            position: absolute;
-            font-size: 11px;
-            font-weight: 800;
-            color: #f8fafc;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            position: absolute; font-size: 11px; font-weight: 800;
+            color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        /* CANVAS HOST */
         .canvas-host {
             width: 100%;
             aspect-ratio: 820 / 420;
@@ -183,7 +266,6 @@
             touch-action: none;
         }
 
-        /* COACH FEEDBACK */
         .coach-feedback-box {
             background: #0f172a;
             border: 1px solid #1e293b;
@@ -211,7 +293,6 @@
             margin-top: 2px;
         }
 
-        /* CONTROLS DOCK */
         .controls-dock {
             display: flex;
             align-items: center;
@@ -255,39 +336,146 @@
             color: #fff !important;
             box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
         }
-        
-        .dock-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+
+        .dock-actions { display: flex; align-items: center; gap: 8px; }
         .action-icon-btn {
-            width: 42px;
-            height: 42px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 50%;
-            color: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 42px; height: 42px;
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 50%; color: #f8fafc;
+            display: flex; align-items: center; justify-content: center;
             cursor: pointer;
         }
         .play-hero-btn {
-            width: 50px;
-            height: 50px;
-            background: #0284c7;
-            border: 2px solid #38bdf8;
-            border-radius: 50%;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+            width: 50px; height: 50px;
+            background: #0284c7; border: 2px solid #38bdf8;
+            border-radius: 50%; color: #ffffff;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
         }
 
-        /* DRAWER OVERLAY */
+        /* ------------------------------------------------------------- */
+        /* PORTAL 2 PREVIEW / PLACEHOLDER STAGE                          */
+        /* ------------------------------------------------------------- */
+        .sparrer-placeholder-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 520px;
+            padding: 30px 16px;
+            text-align: center;
+            gap: 16px;
+        }
+        .sparrer-icon-box {
+            width: 72px; height: 72px; border-radius: 20px;
+            background: rgba(245, 158, 11, 0.12);
+            border: 2px solid #f59e0b;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px;
+        }
+        .sparrer-title { font-size: 20px; font-weight: 800; color: #facc15; }
+        .sparrer-desc { font-size: 13px; color: #94a3b8; line-height: 1.5; max-width: 380px; }
+
+        /* ------------------------------------------------------------- */
+        /* UNIVERSAL PERSISTENT BOTTOM ANCHOR (LEVEL 0 NAV)              */
+        /* ------------------------------------------------------------- */
+        .universal-dock {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 52px;
+            background: rgba(11, 17, 30, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 16px;
+            z-index: 800;
+        }
+        .universal-nav-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: color 0.12s ease, background 0.12s ease;
+        }
+        .universal-nav-btn:active, .universal-nav-btn.active {
+            color: #38bdf8;
+            background: rgba(56, 189, 248, 0.1);
+        }
+        .universal-nav-btn svg { width: 18px; height: 18px; }
+
+        /* ------------------------------------------------------------- */
+        /* LAYER 0: STANCE CALIBRATION & PROFILE DRAWER                  */
+        /* ------------------------------------------------------------- */
+        .settings-overlay {
+            position: fixed; inset: 0; background: rgba(4, 7, 13, 0.85);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            padding: 16px;
+        }
+        .settings-card {
+            width: 100%; max-width: 400px; background: #0f172a;
+            border: 1.5px solid #38bdf8; border-radius: 18px; padding: 20px;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.85);
+            max-height: 90vh; overflow-y: auto;
+        }
+        .settings-title {
+            font-size: 17px; font-weight: 800; color: #f8fafc;
+            margin-bottom: 14px; text-align: center;
+        }
+        .settings-card label {
+            font-size: 12px; font-weight: 700; color: #94a3b8;
+            display: block; margin-top: 10px;
+        }
+        .settings-card input {
+            width: 100%; height: 38px; background: #1e293b; border: 1px solid #334155;
+            border-radius: 8px; padding: 0 10px; color: #fff; font-size: 13.5px;
+            margin-top: 4px; outline: none;
+        }
+        
+        /* STANCE FOOTPRINT SELECTOR */
+        .stance-group {
+            display: flex; gap: 8px; margin-top: 6px;
+        }
+        .stance-btn {
+            flex: 1; padding: 10px 6px; background: #1e293b;
+            border: 1.5px solid #334155; border-radius: 10px;
+            color: #cbd5e1; cursor: pointer; text-align: center;
+            font-family: inherit; font-weight: 700; font-size: 11.5px;
+            transition: all 0.12s ease;
+        }
+        .stance-btn .footprint { font-size: 16px; display: block; margin-bottom: 2px; }
+        .stance-btn.active {
+            background: rgba(2, 132, 199, 0.25);
+            border-color: #38bdf8; color: #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        /* 3-SECOND SHOE-STEP VISUAL GUIDE */
+        .shoe-guide-box {
+            background: #1e293b; border-radius: 8px; padding: 10px;
+            margin-top: 12px; border-left: 3px solid #38bdf8;
+        }
+        .shoe-guide-title { font-size: 11.5px; font-weight: 800; color: #38bdf8; margin-bottom: 4px; }
+        .shoe-guide-item { font-size: 11px; color: #cbd5e1; line-height: 1.4; }
+
+        .settings-save-btn {
+            width: 100%; height: 42px; margin-top: 16px; background: #0284c7;
+            color: #fff; border: none; border-radius: 8px; font-weight: 800;
+            font-size: 14px; cursor: pointer;
+        }
+
+        /* QUICK JUMP SUB-DRILL DRAWER */
         .drawer-overlay {
             position: fixed; inset: 0; background: rgba(4, 7, 13, 0.78);
             backdrop-filter: blur(6px); z-index: 900;
@@ -302,9 +490,7 @@
             font-size: 14px; font-weight: 800; color: #38bdf8;
             margin-bottom: 12px; text-align: center;
         }
-        .drawer-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
-        }
+        .drawer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
         .drawer-item-btn {
             background: #1e293b; color: #f8fafc; border: 1px solid #334155;
             border-radius: 8px; padding: 10px 8px; font-size: 12px; font-weight: 700;
@@ -312,9 +498,12 @@
         }
         .drawer-item-btn:active { background: #0284c7; border-color: #38bdf8; }
 
-        /* ZERO-SCROLL LANDSCAPE */
+        /* ZERO-SCROLL LANDSCAPE COCKPIT */
         @media (orientation: landscape) and (max-height: 520px) {
-            .arena-stage { padding: 4px 8px 6px; justify-content: space-between; }
+            body { padding-bottom: 42px; }
+            .universal-dock { height: 40px; padding: 0 10px; }
+            .universal-nav-btn { padding: 4px 10px; font-size: 11px; }
+            .arena-stage { padding: 4px 8px 46px; justify-content: space-between; }
             .top-header { height: 32px; margin-bottom: 2px; }
             .header-title-pill { padding: 4px 12px; font-size: 12px; }
             .timer-ring-container, .timer-ring-svg { width: 32px; height: 32px; }
@@ -328,46 +517,65 @@
             .action-icon-btn { width: 34px; height: 34px; }
             .play-hero-btn { width: 38px; height: 38px; }
         }
-
-        /* ONBOARDING MODAL */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(4, 7, 13, 0.88);
-            backdrop-filter: blur(8px); z-index: 1000;
-            display: flex; align-items: center; justify-content: center; padding: 16px;
-        }
-        .modal-card {
-            width: 100%; max-width: 360px; background: #0f172a;
-            border: 1px solid #38bdf8; border-radius: 16px; padding: 20px;
-        }
-        .modal-card label { font-size: 12px; font-weight: 700; color: #94a3b8; display: block; margin-top: 10px; }
-        .modal-card input {
-            width: 100%; height: 40px; background: #1e293b; border: 1px solid #334155;
-            border-radius: 8px; padding: 0 10px; color: #fff; font-size: 14px; margin-top: 4px; outline: none;
-        }
-        .modal-row { display: flex; gap: 8px; }
-        .modal-row > div { flex: 1; }
-        .modal-save-btn {
-            width: 100%; height: 44px; margin-top: 16px; background: #0284c7;
-            color: #fff; border: none; border-radius: 8px; font-weight: 800; cursor: pointer;
-        }
     </style>
 </head>
 <body>
 
-    <!-- VIEW 1: ACTIVE DRILL CATALOG -->
-    <div id="catalogView" class="catalog-stage">
-        <div class="catalog-header">
-            <span class="catalog-title">Riva Fencer</span>
-            <div id="athleteBadge" class="user-chip" onclick="openProfileModal()">👤 प्रोफाइल</div>
+    <!-- ------------------------------------------------------------- -->
+    <!-- VIEW 1: DUAL-PORTAL DASHBOARD                                 -->
+    <!-- ------------------------------------------------------------- -->
+    <main id="portalView" class="portal-stage">
+        <header class="portal-top-bar">
+            <div class="app-branding">
+                <span class="app-name">RIVA FENCER</span>
+                <span class="app-subtext" id="athleteStatusLine">सराव साथी • रीवा</span>
+            </div>
+            <div class="wake-pill" id="wakeStatusPill">
+                <span class="wake-dot"></span>
+                <span id="wakeStatusText">जागृत</span>
+            </div>
+        </header>
+
+        <!-- PORTAL 1: SARAAV (KINETIC DRILL DECK) -->
+        <article class="portal-card card-drills" onclick="openDrillCatalog()">
+            <span class="portal-badge badge-drills">पोर्टल १ • बायोमेकॅनिक्स</span>
+            <h2 class="portal-heading">सराव (Kinetic Drills)</h2>
+            <p class="portal-desc">शास्त्रीय तंत्र, पाऊल क्रम, ब्लेड बकलिंग व स्लो-मोशन फ्रेम अभ्यास.</p>
+            <div class="portal-meta">
+                <span>📚 १००+ सराव संच</span>
+                <span>⏱️ अचूक ३० से. फेऱ्या</span>
+            </div>
+        </article>
+
+        <!-- PORTAL 2: AAVHAN (REACTION SPARRER) -->
+        <article class="portal-card card-sparrer" onclick="openReactionSparrer()">
+            <span class="portal-badge badge-sparrer">पोर्टल २ • रिअॅक्शन कॉम्बॅट</span>
+            <h2 class="portal-heading">आव्हान (Reaction Sparrer)</h2>
+            <p class="portal-desc">अनपेक्षित मुकाबला पेसिंग, 'थांबा!' तोल ब्रेक व १०-फूट अ‍ॅम्बियंट व्हिजन संकेत.</p>
+            <div class="portal-meta">
+                <span>⚡ मायक्रो-बर्स्ट बाऊट</span>
+                <span>🛑 एक्सेंट्रिक बॅलन्स</span>
+            </div>
+        </article>
+    </main>
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- VIEW 2: NUMERIC DRILL CATALOG (PORTAL 1 SUB-VIEW)             -->
+    <!-- ------------------------------------------------------------- -->
+    <section id="catalogView" class="catalog-stage" style="display: none;">
+        <div class="catalog-nav-header">
+            <button class="back-portal-btn" onclick="goHome()">← पोर्टल मेनू</button>
+            <span style="font-size:14px; font-weight:800; color:#38bdf8;">सराव डेक निवडा</span>
         </div>
         <div class="numeric-grid" id="numericGridContainer"></div>
-    </div>
+    </section>
 
-    <!-- VIEW 2: ARENA VIEW -->
-    <div id="arenaView" class="arena-stage" style="display: none;">
-        
+    <!-- ------------------------------------------------------------- -->
+    <!-- VIEW 3: MASTER ARENA (STUDY MODE)                             -->
+    <!-- ------------------------------------------------------------- -->
+    <section id="arenaView" class="arena-stage" style="display: none;">
         <header class="top-header">
-            <button class="header-back-btn" onclick="closeArenaView()">
+            <button class="header-back-btn" onclick="backToCatalog()">
                 <span>← यादी</span>
             </button>
             
@@ -433,9 +641,47 @@
                 <span id="btnNextLabel">पुढे ▶</span>
             </button>
         </nav>
-    </div>
+    </section>
 
-    <!-- DYNAMIC DRAWER -->
+    <!-- ------------------------------------------------------------- -->
+    <!-- VIEW 4: PORTAL 2 ENGINE PREVIEW                               -->
+    <!-- ------------------------------------------------------------- -->
+    <section id="sparrerPlaceholderView" class="sparrer-placeholder-stage" style="display: none;">
+        <div class="sparrer-icon-box">⚡</div>
+        <h2 class="sparrer-title">आव्हान (Reaction Sparrer)</h2>
+        <p class="sparrer-desc">
+            १०-फूट अ‍ॅम्बियंट व्हिजन डिस्प्ले (हिरवा: पुढे, निळा: मागे, अंबर: 'थांबा!' ब्रेक).
+            मायक्रो-बर्स्ट बाऊट स्ट्रक्चर (३० से. मुकाबला / १५ से. विश्रांती) पुढील स्टेपमध्ये सक्रिय होईल!
+        </p>
+        <button class="back-portal-btn" onclick="goHome()" style="padding:10px 20px; font-size:13.5px; margin-top:8px;">
+            ← मुख्य पोर्टलवर परत जा
+        </button>
+    </section>
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- UNIVERSAL PERSISTENT BOTTOM ANCHOR                            -->
+    <!-- ------------------------------------------------------------- -->
+    <nav class="universal-dock" aria-label="Universal Navigation">
+        <button class="universal-nav-btn active" id="univHomeBtn" onclick="goHome()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>⌂ होम</span>
+        </button>
+
+        <button class="universal-nav-btn" id="univSettingsBtn" onclick="openSettingsModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span>⚙ सेटिंग्ज</span>
+        </button>
+    </nav>
+
+    <!-- ------------------------------------------------------------- -->
+    <!-- QUICK JUMP SUB-DRILL DRAWER                                   -->
+    <!-- ------------------------------------------------------------- -->
     <div id="subDrillDrawer" class="drawer-overlay" style="display: none;" onclick="toggleSubDrillDrawer(false)">
         <div class="drawer-card" onclick="event.stopPropagation()">
             <div class="drawer-title">सराव भाग निवडा (Select Sub-Drill)</div>
@@ -443,34 +689,145 @@
         </div>
     </div>
 
-    <!-- PROFILE MODAL -->
-    <div id="profileModal" class="modal-overlay" style="display: none;">
-        <div class="modal-card">
-            <h3 style="margin:0 0 4px 0; color:#fff; font-size:16px;">खेळाडू प्रोफाइल</h3>
-            <form onsubmit="saveAthleteProfile(event)">
-                <label>नाव (Athlete Name)</label>
+    <!-- ------------------------------------------------------------- -->
+    <!-- LAYER 0: STANCE CALIBRATION & PROFILE MODAL                   -->
+    <!-- ------------------------------------------------------------- -->
+    <div id="settingsModal" class="settings-overlay" style="display: none;">
+        <div class="settings-card">
+            <h3 class="settings-title">खेळाडू व स्टॅन्स कॅलिब्रेशन</h3>
+            <form onsubmit="saveAthleteSettings(event)">
+                <label>खेळाडूचे नाव</label>
                 <input type="text" id="athleteNameInput" placeholder="रीवा" required>
-                <div class="modal-row">
-                    <div>
+
+                <label>पायांचे नैसर्गिक अंतर (Stance Footprint)</label>
+                <div class="stance-group">
+                    <button type="button" class="stance-btn" id="stanceNarrow" onclick="setStance('narrow')">
+                        <span class="footprint">👟👟</span>
+                        अरुंद (~२.०)
+                    </button>
+                    <button type="button" class="stance-btn active" id="stanceMedium" onclick="setStance('medium')">
+                        <span class="footprint">👟┈👟</span>
+                        मध्यम (~२.५)
+                    </button>
+                    <button type="button" class="stance-btn" id="stanceWide" onclick="setStance('wide')">
+                        <span class="footprint">👟┈┈👟</span>
+                        रुंद (~३.०)
+                    </button>
+                </div>
+
+                <div class="shoe-guide-box">
+                    <div class="shoe-guide-title">📐 ३-सेकंद "शू-स्टेप" चाचणी:</div>
+                    <div class="shoe-guide-item">१. दोन्ही टाचा एकत्र जोडून 'L' आकार बनवा.</div>
+                    <div class="shoe-guide-item">२. पुढचा पाय सरळ समोर टाका (२ ते २.५ बुटांचे अंतर).</div>
+                    <div class="shoe-guide-item">३. गुडघा किंचित वाकवून ऑन-गार्द तोल साधा!</div>
+                </div>
+
+                <div style="display:flex; gap:8px;">
+                    <div style="flex:1;">
                         <label>वय (उदा. 6.9)</label>
                         <input type="number" id="athleteAgeInput" step="0.1" placeholder="6.9" required>
                     </div>
-                    <div>
-                        <label>वजन kg (उदा. 16.5)</label>
-                        <input type="number" id="athleteWeightInput" step="0.1" placeholder="16.5" required>
+                    <div style="flex:1;">
+                        <label>उंची cm</label>
+                        <input type="number" id="athleteHeightInput" step="0.5" placeholder="118.5" required>
                     </div>
                 </div>
-                <label>उंची cm</label>
-                <input type="number" id="athleteHeightInput" step="0.5" placeholder="118.5" required>
-                <button type="submit" class="modal-save-btn">सुरू करा (Save & Play)</button>
+
+                <button type="submit" class="settings-save-btn">सेव्ह करा (Save & Apply)</button>
             </form>
         </div>
     </div>
 
 <script>
+// -------------------------------------------------------------
+// HARDWARE LIFECYCLE & WAKE LOCK ENGINE
+// -------------------------------------------------------------
+let globalWakeLock = null;
+
+async function requestScreenWake() {
+    if ('wakeLock' in navigator) {
+        try {
+            globalWakeLock = await navigator.wakeLock.request('screen');
+            setWakeDot(true);
+            globalWakeLock.addEventListener('release', () => setWakeDot(false));
+        } catch (e) {
+            setWakeDot(false);
+        }
+    }
+}
+
+function setWakeDot(isActive) {
+    const dot = document.querySelector('.wake-dot');
+    const text = document.getElementById('wakeStatusText');
+    if (dot && text) {
+        dot.style.background = isActive ? '#22c55e' : '#64748b';
+        dot.style.boxShadow = isActive ? '0 0 6px #22c55e' : 'none';
+        text.innerText = isActive ? 'जागृत' : 'स्टँडबाय';
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        requestScreenWake();
+    }
+});
+requestScreenWake();
+
+// -------------------------------------------------------------
+// UNIVERSAL PERSISTENT ANCHOR (MASTER KILL SWITCH)
+// -------------------------------------------------------------
 let currentCartridge = null;
 
-// 1. AUTO-DETECT CATALOG PIPELINE (DISCOVERS DRILLS DYNAMICALLY)
+function goHome() {
+    // 1. Terminate all active audio synthesis and voices immediately
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    
+    // 2. Halt running cartridge loop safely
+    if (currentCartridge && currentCartridge.stop) {
+        currentCartridge.stop();
+    }
+
+    // 3. Reset views
+    document.getElementById('arenaView').style.display = 'none';
+    document.getElementById('catalogView').style.display = 'none';
+    document.getElementById('sparrerPlaceholderView').style.display = 'none';
+    document.getElementById('portalView').style.display = 'flex';
+
+    // 4. Update navigation highlight
+    document.getElementById('univHomeBtn').classList.add('active');
+    document.getElementById('univSettingsBtn').classList.remove('active');
+}
+
+function openDrillCatalog() {
+    primeAudioOnUserGesture();
+    document.getElementById('portalView').style.display = 'none';
+    document.getElementById('catalogView').style.display = 'flex';
+    autoDetectCatalog();
+}
+
+function openReactionSparrer() {
+    primeAudioOnUserGesture();
+    document.getElementById('portalView').style.display = 'none';
+    document.getElementById('sparrerPlaceholderView').style.display = 'flex';
+}
+
+function backToCatalog() {
+    if (currentCartridge && currentCartridge.stop) currentCartridge.stop();
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    document.getElementById('arenaView').style.display = 'none';
+    document.getElementById('catalogView').style.display = 'flex';
+}
+
+function primeAudioOnUserGesture() {
+    if (window.AudioContext || window.webkitAudioContext) {
+        const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (tempCtx.state === 'suspended') tempCtx.resume();
+    }
+}
+
+// -------------------------------------------------------------
+// PORTAL 1: DYNAMIC CARTRIDGE AUTO-DISCOVERY
+// -------------------------------------------------------------
 async function autoDetectCatalog() {
     const container = document.getElementById('numericGridContainer');
     container.innerHTML = '';
@@ -481,7 +838,7 @@ async function autoDetectCatalog() {
         const file = `drills/drill_${String(id).padStart(3, '0')}.js`;
         try {
             const res = await fetch(file, { method: 'HEAD' });
-            if (!res.ok) break; // Stops cleanly when next file is not found
+            if (!res.ok) break;
             addCard(id);
             foundAny = true;
             id++;
@@ -490,9 +847,8 @@ async function autoDetectCatalog() {
         }
     }
 
-    // Safety fallback for local file execution or offline caching
     if (!foundAny) {
-        [1, 2].forEach(n => addCard(n));
+        [1, 2, 3].forEach(n => addCard(n));
     }
 
     function addCard(n) {
@@ -503,18 +859,11 @@ async function autoDetectCatalog() {
         container.appendChild(c);
     }
 }
-autoDetectCatalog();
 
 function loadDrill(id) {
     document.getElementById('catalogView').style.display = 'none';
     document.getElementById('arenaView').style.display = 'flex';
     loadCartridge(id);
-}
-
-function closeArenaView() {
-    if (currentCartridge && currentCartridge.stop) currentCartridge.stop();
-    document.getElementById('arenaView').style.display = 'none';
-    document.getElementById('catalogView').style.display = 'flex';
 }
 
 function loadCartridge(id) {
@@ -534,21 +883,21 @@ function loadCartridge(id) {
     document.body.appendChild(s);
 }
 
-// 2. DEFENSIVE SELF-HEALING DRAWER BUILDER
-const FALLBACK_DRILL_1_TITLES = [
-    "१. 'L' पोझिशन", "२. एन गार्डे", "३. पाऊल क्रम", "४. लेझर टिप",
-    "५. अटॅक", "६. रॉकेट लंज", "७. पॅरी ४", "८. पॅरी ६"
-];
+// -------------------------------------------------------------
+// DEFENSIVE SUB-DRILL DRAWER
+// -------------------------------------------------------------
+const FALLBACK_DRILL_TITLES = {
+    1: ["१. 'L' पोझिशन", "२. एन गार्डे", "३. पाऊल क्रम", "४. लेझर टिप", "५. अटॅक", "६. रॉकेट लंज", "७. पॅरी ४", "८. पॅरी ६"]
+};
 
 function buildSubDrillDrawer(loadedDrillId) {
     const grid = document.getElementById('drawerGrid');
     if (!grid || !currentCartridge) return;
     grid.innerHTML = '';
 
-    // If cartridge has subDrills, use them; otherwise, provide default titles
     let list = currentCartridge.subDrills;
     if (!list || list.length === 0) {
-        list = (loadedDrillId === 1 || !loadedDrillId) ? FALLBACK_DRILL_1_TITLES : [];
+        list = FALLBACK_DRILL_TITLES[loadedDrillId] || [];
     }
 
     list.forEach((title, idx) => {
@@ -558,6 +907,15 @@ function buildSubDrillDrawer(loadedDrillId) {
         btn.onclick = () => selectSubDrillAndClose(idx);
         grid.appendChild(btn);
     });
+}
+
+function toggleSubDrillDrawer(show) {
+    document.getElementById('subDrillDrawer').style.display = show ? 'flex' : 'none';
+}
+
+function selectSubDrillAndClose(idx) {
+    if (currentCartridge) currentCartridge.switchSubDrill(idx);
+    toggleSubDrillDrawer(false);
 }
 
 function setPlayState(isPlaying) {
@@ -578,15 +936,6 @@ function triggerRestart() {
     }
 }
 
-function toggleSubDrillDrawer(show) {
-    document.getElementById('subDrillDrawer').style.display = show ? 'flex' : 'none';
-}
-
-function selectSubDrillAndClose(idx) {
-    if (currentCartridge) currentCartridge.switchSubDrill(idx);
-    toggleSubDrillDrawer(false);
-}
-
 function triggerAudioToggle() {
     if (!currentCartridge) return;
     const isMuted = currentCartridge.toggleAudio();
@@ -594,7 +943,9 @@ function triggerAudioToggle() {
     document.getElementById('audioMuteIcon').style.display = isMuted ? 'block' : 'none';
 }
 
-// TAP-VS-HOLD GESTURE ENGINE
+// -------------------------------------------------------------
+// TAP-VS-HOLD SCRUBBING ENGINE (MOBILE HARDENED)
+// -------------------------------------------------------------
 function setupReliableStepHoldButton(config) {
     const { btnId, labelId, normalText, activeHoldText, activeClass, onSingleTap, onHoldStart, onHoldEnd } = config;
     const el = document.getElementById(btnId);
@@ -673,37 +1024,54 @@ setupReliableStepHoldButton({
     onHoldEnd:   () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(1.0); }
 });
 
-// BIOMETRICS PROFILE STORAGE
-function checkOnboarding() {
-    const a = localStorage.getItem('riva_athlete');
-    if (!a) {
-        document.getElementById('profileModal').style.display = 'flex';
-    } else {
-        const p = JSON.parse(a);
-        document.getElementById('athleteBadge').innerText = `👤 ${p.name} (${p.age}y)`;
-    }
+// -------------------------------------------------------------
+// LAYER 0: STANCE CALIBRATION & PROFILE LOGIC
+// -------------------------------------------------------------
+let selectedStance = 'medium';
+
+function setStance(val) {
+    selectedStance = val;
+    document.getElementById('stanceNarrow').classList.toggle('active', val === 'narrow');
+    document.getElementById('stanceMedium').classList.toggle('active', val === 'medium');
+    document.getElementById('stanceWide').classList.toggle('active', val === 'wide');
 }
-function saveAthleteProfile(e) {
+
+function openSettingsModal() {
+    const athlete = JSON.parse(localStorage.getItem('riva_athlete')) || { name: 'रीवा', age: 6.9, height: 118.5 };
+    const stance = localStorage.getItem('riva_stance') || 'medium';
+
+    document.getElementById('athleteNameInput').value = athlete.name || 'रीवा';
+    document.getElementById('athleteAgeInput').value = athlete.age || 6.9;
+    document.getElementById('athleteHeightInput').value = athlete.height || 118.5;
+    setStance(stance);
+
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function saveAthleteSettings(e) {
     e.preventDefault();
-    const p = {
+    const athlete = {
         name: document.getElementById('athleteNameInput').value.trim() || 'रीवा',
         age: parseFloat(document.getElementById('athleteAgeInput').value) || 6.9,
-        weight: parseFloat(document.getElementById('athleteWeightInput').value) || 16.5,
         height: parseFloat(document.getElementById('athleteHeightInput').value) || 118.5
     };
-    localStorage.setItem('riva_athlete', JSON.stringify(p));
-    document.getElementById('profileModal').style.display = 'none';
-    document.getElementById('athleteBadge').innerText = `👤 ${p.name} (${p.age}y)`;
+    localStorage.setItem('riva_athlete', JSON.stringify(athlete));
+    localStorage.setItem('riva_stance', selectedStance);
+
+    document.getElementById('athleteStatusLine').innerText = `सराव साथी • ${athlete.name}`;
+    document.getElementById('settingsModal').style.display = 'none';
 }
-function openProfileModal() {
-    const p = JSON.parse(localStorage.getItem('riva_athlete')) || {};
-    document.getElementById('athleteNameInput').value = p.name || '';
-    document.getElementById('athleteAgeInput').value = p.age || '';
-    document.getElementById('athleteWeightInput').value = p.weight || '';
-    document.getElementById('athleteHeightInput').value = p.height || '';
-    document.getElementById('profileModal').style.display = 'flex';
+
+function initAthleteDefaults() {
+    if (!localStorage.getItem('riva_stance')) {
+        localStorage.setItem('riva_stance', 'medium');
+    }
+    const athlete = JSON.parse(localStorage.getItem('riva_athlete'));
+    if (athlete && athlete.name) {
+        document.getElementById('athleteStatusLine').innerText = `सराव साथी • ${athlete.name}`;
+    }
 }
-checkOnboarding();
+initAthleteDefaults();
 </script>
 </body>
 </html>
