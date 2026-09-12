@@ -160,7 +160,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        /* CANVAS CONTAINER (RATIO-LOCKED & SHADOWED) */
+        /* CANVAS HOST */
         .canvas-host {
             width: 100%;
             aspect-ratio: 820 / 420;
@@ -237,13 +237,23 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            min-width: 84px;
+            min-width: 90px;
             justify-content: center;
-            touch-action: manipulation;
+            touch-action: none; /* Prevents scroll cancellation on touch hold */
+            -webkit-touch-callout: none;
+            transition: background 0.12s ease, border-color 0.12s ease;
         }
-        .nav-step-btn:active, .nav-step-btn.holding { 
-            background: #0284c7; 
-            border-color: #38bdf8; 
+        .nav-step-btn.holding-slow {
+            background: #d97706 !important;
+            border-color: #f59e0b !important;
+            color: #fff !important;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+        }
+        .nav-step-btn.holding-fast {
+            background: #0284c7 !important;
+            border-color: #38bdf8 !important;
+            color: #fff !important;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
         }
         
         .dock-actions {
@@ -277,7 +287,7 @@
             box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
         }
 
-        /* QUICK JUMP DRAWER / MODAL */
+        /* QUICK JUMP DRAWER */
         .drawer-overlay {
             position: fixed; inset: 0; background: rgba(4, 7, 13, 0.78);
             backdrop-filter: blur(6px); z-index: 900;
@@ -302,9 +312,7 @@
         }
         .drawer-item-btn:active { background: #0284c7; border-color: #38bdf8; }
 
-        /* ------------------------------------------------------------- */
-        /* TRUE ZERO-SCROLL LANDSCAPE STYLING */
-        /* ------------------------------------------------------------- */
+        /* ZERO-SCROLL LANDSCAPE */
         @media (orientation: landscape) and (max-height: 520px) {
             .arena-stage {
                 padding: 4px 8px 6px;
@@ -348,7 +356,7 @@
             }
             .nav-step-btn {
                 padding: 6px 12px;
-                min-width: 76px;
+                min-width: 80px;
                 font-size: 12px;
             }
             .action-icon-btn {
@@ -423,12 +431,12 @@
 
         <div class="coach-feedback-box">
             <div id="status-box">सराव सुरू करण्यासाठी प्ले दाबा</div>
-            <div class="hint-bar">💡 स्क्रीन दाबून धरा = ०.२५x स्लो-मोशन | लाल त्रुटीवर टॅप करा = दुरुस्त!</div>
+            <div class="hint-bar">💡 स्क्रीन दाबून धरा = ०.२५x स्लो | लाल त्रुटीवर टॅप करा = दुरुस्त!</div>
         </div>
 
         <nav class="controls-dock">
             <button class="nav-step-btn" id="btnPrev">
-                <span>◀ मागे</span>
+                <span id="btnPrevLabel">◀ मागे</span>
             </button>
 
             <div class="dock-actions">
@@ -462,12 +470,12 @@
             </div>
 
             <button class="nav-step-btn" id="btnNext">
-                <span>पुढे ▶</span>
+                <span id="btnNextLabel">पुढे ▶</span>
             </button>
         </nav>
     </div>
 
-    <!-- QUICK-JUMP SUB-DRILL DRAWER (HIDDEN UNTIL BADGE IS TAPPED) -->
+    <!-- QUICK-JUMP SUB-DRILL DRAWER -->
     <div id="subDrillDrawer" class="drawer-overlay" style="display: none;" onclick="toggleSubDrillDrawer(false)">
         <div class="drawer-card" onclick="event.stopPropagation()">
             <div class="drawer-title">सराव भाग निवडा (Select Sub-Drill)</div>
@@ -484,7 +492,7 @@
         </div>
     </div>
 
-    <!-- BIOMETRICS ONBOARDING MODAL -->
+    <!-- PROFILE MODAL -->
     <div id="profileModal" class="modal-overlay" style="display: none;">
         <div class="modal-card">
             <h3 style="margin:0 0 4px 0; color:#fff; font-size:16px;">खेळाडू प्रोफाइल</h3>
@@ -587,52 +595,91 @@ function triggerAudioToggle() {
     document.getElementById('audioMuteIcon').style.display = isMuted ? 'block' : 'none';
 }
 
-// TAP TO STEP | HOLD TO SCRUB SPEED
-function bindHoldStepButton(btnId, onSingleTap, onHoldStart, onHoldEnd) {
+// -------------------------------------------------------------
+// BULLETPROOF TAP-VS-HOLD GESTURE ENGINE (FIXES DOUBLE-STEP BUG)
+// -------------------------------------------------------------
+function setupReliableStepHoldButton(config) {
+    const { btnId, labelId, normalText, activeHoldText, activeClass, onSingleTap, onHoldStart, onHoldEnd } = config;
     const el = document.getElementById(btnId);
+    const labelEl = document.getElementById(labelId);
     if (!el) return;
+
+    let isDown = false;
     let holdTimer = null;
-    let didTriggerHold = false;
+    let isHoldActive = false;
 
     el.addEventListener('pointerdown', (e) => {
         e.preventDefault();
-        didTriggerHold = false;
+        isDown = true;
+        isHoldActive = false;
+
         holdTimer = setTimeout(() => {
-            didTriggerHold = true;
-            el.classList.add('holding');
+            if (!isDown) return;
+            isHoldActive = true;
+            el.classList.add(activeClass);
+            if (labelEl) labelEl.innerText = activeHoldText;
             onHoldStart();
-        }, 220);
+        }, 260); // 260ms threshold distinguishes a tap from intentional hold
     });
 
-    const release = (e) => {
-        if (holdTimer) clearTimeout(holdTimer);
-        el.classList.remove('holding');
-        if (didTriggerHold) {
+    el.addEventListener('pointerup', (e) => {
+        e.preventDefault();
+        if (!isDown) return; // Ignores secondary ghost releases
+        isDown = false;
+        clearTimeout(holdTimer);
+
+        if (isHoldActive) {
+            // Held down: end speed scrub
+            el.classList.remove(activeClass);
+            if (labelEl) labelEl.innerText = normalText;
             onHoldEnd();
         } else {
+            // Quick tap: advance exactly once!
             onSingleTap();
         }
-        didTriggerHold = false;
+        isHoldActive = false;
+    });
+
+    // If gesture is cancelled or leaves, ONLY shut down active hold without firing tap
+    const cancelHold = () => {
+        if (!isDown) return;
+        isDown = false;
+        clearTimeout(holdTimer);
+        if (isHoldActive) {
+            el.classList.remove(activeClass);
+            if (labelEl) labelEl.innerText = normalText;
+            onHoldEnd();
+        }
+        isHoldActive = false;
     };
 
-    el.addEventListener('pointerup', release);
-    el.addEventListener('pointercancel', release);
-    el.addEventListener('pointerleave', release);
+    el.addEventListener('pointercancel', cancelHold);
+    el.addEventListener('pointerleave', cancelHold);
 }
 
-bindHoldStepButton(
-    'btnPrev',
-    () => { if (currentCartridge) currentCartridge.prevSubDrill(); },
-    () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(0.25); },
-    () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(1.0); }
-);
+// BACK BUTTON: Tap = Previous Drill | Hold = 0.25x Slow Motion
+setupReliableStepHoldButton({
+    btnId: 'btnPrev',
+    labelId: 'btnPrevLabel',
+    normalText: '◀ मागे',
+    activeHoldText: '🐢 ०.२५x',
+    activeClass: 'holding-slow',
+    onSingleTap: () => { if (currentCartridge) currentCartridge.prevSubDrill(); },
+    onHoldStart: () => { if (currentCartridge) currentCartridge.setSpeed(0.25); },
+    onHoldEnd:   () => { if (currentCartridge) currentCartridge.setSpeed(1.0); }
+});
 
-bindHoldStepButton(
-    'btnNext',
-    () => { if (currentCartridge) currentCartridge.nextSubDrill(); },
-    () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(1.75); },
-    () => { if (currentCartridge && currentCartridge.setSpeed) currentCartridge.setSpeed(1.0); }
-);
+// NEXT BUTTON: Tap = Next Drill | Hold = 2.5x Fast Forward
+setupReliableStepHoldButton({
+    btnId: 'btnNext',
+    labelId: 'btnNextLabel',
+    normalText: 'पुढे ▶',
+    activeHoldText: '⚡ २.५x',
+    activeClass: 'holding-fast',
+    onSingleTap: () => { if (currentCartridge) currentCartridge.nextSubDrill(); },
+    onHoldStart: () => { if (currentCartridge) currentCartridge.setSpeed(2.5); },
+    onHoldEnd:   () => { if (currentCartridge) currentCartridge.setSpeed(1.0); }
+});
 
 // BIOMETRICS PROFILE STORAGE
 function checkOnboarding() {
